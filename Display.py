@@ -110,23 +110,11 @@ class imagedisplayer(analyzer,QWidget):
                 displaygui.MinHistSpinBox.setValue(0)
                 
                 
+                
             else:
                 pass
 
-            #self.lower = displaygui.MinHistSlider.value()
-            #self.upper = displaygui.MaxHistSlider.value()
-            #
-            #self.READ_IMAGE(displaygui, fnames[0])
-            
-   # def SHOWIMAGE(self, displaygui, img, width, height, totalBytes):
-   #         from PyQt5 import QtGui
-   #         
-   #         bytesPerLine = int(totalBytes/height)
-   #         qimage = QtGui.QImage(img, width, height, bytesPerLine, QtGui.QImage.Format_Grayscale8)
-   #         
-   #         displaygui.ImageDisplay.setPixmap(QtGui.QPixmap.fromImage(qimage))
-                
-                
+    
     def COL_SCROLLER_MOVE_UPDATE(self, displaygui):
             
             self.Col_Scroller_ind = displaygui.ColScroller.value()
@@ -418,13 +406,11 @@ class imagedisplayer(analyzer,QWidget):
             
     def SHOWIMAGE(self, displaygui, img, width, height, totalBytes):
             
-            
-            bytesPerLine = int(totalBytes/height)
-            
-            displaygui.scene.addPixmap(QtGui.QPixmap.fromImage(qimage2ndarray.array2qimage(img)))
-            #displaygui.ImageView.fitInView(QtCore.QRectF(0, 0, height, width), QtCore.Qt.KeepAspectRatio)
-            displaygui.ImageView.setScene(displaygui.scene)
-            self.fitInView(displaygui.scene, displaygui)
+                        
+            #displaygui.scene.addPixmap(QtGui.QPixmap.fromImage(qimage2ndarray.array2qimage(img)))
+            displaygui.viewer.setPhoto(QtGui.QPixmap.fromImage(qimage2ndarray.array2qimage(img)))
+#             displaygui.ImageView.setScene(displaygui.scene)
+#             self.fitInView(displaygui.scene, displaygui)
             
     def IMAGE_TO_BE_MASKED(self, displaygui):
         
@@ -551,5 +537,20 @@ class imagedisplayer(analyzer,QWidget):
                      viewrect.height() / scenerect.height())
         displaygui.ImageView.scale(factor, factor)
         self._zoom = 0
+    
+    def wheelEvent(self, event: QtGui.QWheelEvent):
+        print('ttt')
+        if event.angleDelta().y() > 0:
+            factor = 1.25
+            self._zoom += 1
+        else:                
+            factor = 0.8
+            self._zoom -= 1
+        if self._zoom > 0:
+            displaygui.ImageView.scale(factor, factor)
+        elif self._zoom == 0:
+            self.fitInView()
+        else:
+            self._zoom = 0
 
     

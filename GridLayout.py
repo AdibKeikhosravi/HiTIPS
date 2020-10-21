@@ -1,7 +1,11 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QWidget
+import numpy as np
+from PyQt5.QtCore import pyqtSlot
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+WELL_PLATE_LENGTH = 24
+WELL_PLLTE_WIDTH = 16
+WELL_PLATE_ROWS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
 
 class gridgenerator(QWidget):
     
@@ -9,7 +13,7 @@ class gridgenerator(QWidget):
         super().__init__(centralwidget)
         
         self.tableWidget = QtWidgets.QTableWidget(centralwidget)
-        self.tableWidget.setGeometry(QtCore.QRect(560, 580, 361, 168))
+        self.tableWidget.setGeometry(QtCore.QRect(10, 170, 376, 178))
         self.tableWidget.setBaseSize(QtCore.QSize(10, 10))
         font = QtGui.QFont()
         font.setPointSize(6)
@@ -17,302 +21,208 @@ class gridgenerator(QWidget):
         font.setWeight(50)
         self.tableWidget.setFont(font)
         self.tableWidget.setObjectName("tableWidget")
-        self.tableWidget.setColumnCount(23)
-        self.tableWidget.setRowCount(15)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(0, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(1, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(2, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(3, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(4, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(5, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(6, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(7, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(8, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(9, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(10, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(11, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(12, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(13, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setVerticalHeaderItem(14, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(0, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(1, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(2, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(3, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(4, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(5, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(6, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(7, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(8, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(9, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(10, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(11, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(12, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(13, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(14, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(15, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(16, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(17, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(18, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(19, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(20, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(21, item)
-        item = QtWidgets.QTableWidgetItem()
-        self.tableWidget.setHorizontalHeaderItem(22, item)
+        self.tableWidget.setColumnCount(WELL_PLATE_LENGTH)
+        self.tableWidget.setRowCount(WELL_PLLTE_WIDTH)
+        self.tableWidget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+#         self.tableWidget.itemClicked.connect(self.on_click)
+
+        for i in range(WELL_PLLTE_WIDTH):
+            item = QtWidgets.QTableWidgetItem()
+            self.tableWidget.setVerticalHeaderItem(i, item)
+
+        for i in range(WELL_PLATE_LENGTH):
+            item = QtWidgets.QTableWidgetItem()
+            self.tableWidget.setHorizontalHeaderItem(i, item)
+
         self.tableWidget.horizontalHeader().setDefaultSectionSize(15)
         self.tableWidget.verticalHeader().setDefaultSectionSize(10)
-        self.listWidget = QtWidgets.QListWidget(centralwidget)
-        self.listWidget.setGeometry(QtCore.QRect(925, 600, 21, 141))
+        ### fov list
+        self.FOVlist = QtWidgets.QListWidget(centralwidget)
+        self.FOVlist.setGeometry(QtCore.QRect(390, 190, 45, 141))
         font = QtGui.QFont()
-        font.setPointSize(11)
-        self.listWidget.setFont(font)
-        self.listWidget.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.listWidget.setGridSize(QtCore.QSize(8, 15))
-        self.listWidget.setBatchSize(80)
-        self.listWidget.setObjectName("listWidget")
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget.addItem(item)
+        font.setPointSize(8)
+        self.FOVlist.setFont(font)
+        self.FOVlist.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+        self.FOVlist.setGridSize(QtCore.QSize(8, 15))
+        self.FOVlist.setBatchSize(80)
+        self.FOVlist.setObjectName("FOVlist")
         self.label = QtWidgets.QLabel(centralwidget)
-        self.label.setGeometry(QtCore.QRect(923, 580, 31, 16))
+        self.label.setGeometry(QtCore.QRect(390, 170, 31, 16))
         font = QtGui.QFont()
         font.setPointSize(11)
         self.label.setFont(font)
         self.label.setObjectName("FOVabel")
-        self.listWidget_2 = QtWidgets.QListWidget(centralwidget)
-        self.listWidget_2.setGeometry(QtCore.QRect(950, 600, 21, 141))
+
+        ### Zlist 
+        self.Zlist = QtWidgets.QListWidget(centralwidget)
+        self.Zlist.setGeometry(QtCore.QRect(440, 190, 45, 141))
+        font = QtGui.QFont()
+        font.setPointSize(8)
+        self.Zlist.setFont(font)
+        self.Zlist.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+        self.Zlist.setGridSize(QtCore.QSize(8, 15))
+        self.Zlist.setBatchSize(80)
+        self.Zlist.setObjectName("Zlist")
+        
+        
+        
+        self.Zlabel = QtWidgets.QLabel(centralwidget)
+        self.Zlabel.setGeometry(QtCore.QRect(445, 170, 16, 20))
         font = QtGui.QFont()
         font.setPointSize(11)
-        self.listWidget_2.setFont(font)
-        self.listWidget_2.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.listWidget_2.setGridSize(QtCore.QSize(8, 15))
-        self.listWidget_2.setBatchSize(80)
-        self.listWidget_2.setObjectName("listWidget_2")
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget_2.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget_2.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget_2.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget_2.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget_2.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget_2.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget_2.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget_2.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget_2.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget_2.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget_2.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget_2.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget_2.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget_2.addItem(item)
-        item = QtWidgets.QListWidgetItem()
-        self.listWidget_2.addItem(item)
-        self.label_2 = QtWidgets.QLabel(centralwidget)
-        self.label_2.setGeometry(QtCore.QRect(955, 580, 16, 20))
+        self.Zlabel.setFont(font)
+        self.Zlabel.setObjectName("Zlabel")
+        
+        ### Time list 
+        self.Timelist = QtWidgets.QListWidget(centralwidget)
+        self.Timelist.setGeometry(QtCore.QRect(490, 190, 45, 141))
+        font = QtGui.QFont()
+        font.setPointSize(8)
+        self.Timelist.setFont(font)
+        self.Timelist.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
+        self.Timelist.setGridSize(QtCore.QSize(8, 15))
+        self.Timelist.setBatchSize(80)
+        self.Timelist.setObjectName("Timelist")
+        
+        
+        
+        self.Timelabel = QtWidgets.QLabel(centralwidget)
+        self.Timelabel.setGeometry(QtCore.QRect(495, 170, 30, 20))
         font = QtGui.QFont()
         font.setPointSize(11)
-        self.label_2.setFont(font)
-        self.label_2.setObjectName("label_2")
-       
+        self.Timelabel.setFont(font)
+        self.Timelabel.setObjectName("Timelabel")
+
 
     
         _translate = QtCore.QCoreApplication.translate
-        item = self.tableWidget.verticalHeaderItem(0)
-        item.setText(_translate("MainWindow", "A"))
-        item = self.tableWidget.verticalHeaderItem(1)
-        item.setText(_translate("MainWindow", "B"))
-        item = self.tableWidget.verticalHeaderItem(2)
-        item.setText(_translate("MainWindow", "C"))
-        item = self.tableWidget.verticalHeaderItem(3)
-        item.setText(_translate("MainWindow", "D"))
-        item = self.tableWidget.verticalHeaderItem(4)
-        item.setText(_translate("MainWindow", "E"))
-        item = self.tableWidget.verticalHeaderItem(5)
-        item.setText(_translate("MainWindow", "F"))
-        item = self.tableWidget.verticalHeaderItem(6)
-        item.setText(_translate("MainWindow", "G"))
-        item = self.tableWidget.verticalHeaderItem(7)
-        item.setText(_translate("MainWindow", "H"))
-        item = self.tableWidget.verticalHeaderItem(8)
-        item.setText(_translate("MainWindow", "I"))
-        item = self.tableWidget.verticalHeaderItem(9)
-        item.setText(_translate("MainWindow", "J"))
-        item = self.tableWidget.verticalHeaderItem(10)
-        item.setText(_translate("MainWindow", "K"))
-        item = self.tableWidget.verticalHeaderItem(11)
-        item.setText(_translate("MainWindow", "L"))
-        item = self.tableWidget.verticalHeaderItem(12)
-        item.setText(_translate("MainWindow", "M"))
-        item = self.tableWidget.verticalHeaderItem(13)
-        item.setText(_translate("MainWindow", "N"))
-        item = self.tableWidget.verticalHeaderItem(14)
-        item.setText(_translate("MainWindow", "P"))
-        item = self.tableWidget.horizontalHeaderItem(0)
-        item.setText(_translate("MainWindow", "1"))
-        item = self.tableWidget.horizontalHeaderItem(1)
-        item.setText(_translate("MainWindow", "2"))
-        item = self.tableWidget.horizontalHeaderItem(2)
-        item.setText(_translate("MainWindow", "3"))
-        item = self.tableWidget.horizontalHeaderItem(3)
-        item.setText(_translate("MainWindow", "4"))
-        item = self.tableWidget.horizontalHeaderItem(4)
-        item.setText(_translate("MainWindow", "5"))
-        item = self.tableWidget.horizontalHeaderItem(5)
-        item.setText(_translate("MainWindow", "6"))
-        item = self.tableWidget.horizontalHeaderItem(6)
-        item.setText(_translate("MainWindow", "7"))
-        item = self.tableWidget.horizontalHeaderItem(7)
-        item.setText(_translate("MainWindow", "8"))
-        item = self.tableWidget.horizontalHeaderItem(8)
-        item.setText(_translate("MainWindow", "9"))
-        item = self.tableWidget.horizontalHeaderItem(9)
-        item.setText(_translate("MainWindow", "10"))
-        item = self.tableWidget.horizontalHeaderItem(10)
-        item.setText(_translate("MainWindow", "11"))
-        item = self.tableWidget.horizontalHeaderItem(11)
-        item.setText(_translate("MainWindow", "12"))
-        item = self.tableWidget.horizontalHeaderItem(12)
-        item.setText(_translate("MainWindow", "13"))
-        item = self.tableWidget.horizontalHeaderItem(13)
-        item.setText(_translate("MainWindow", "14"))
-        item = self.tableWidget.horizontalHeaderItem(14)
-        item.setText(_translate("MainWindow", "15"))
-        item = self.tableWidget.horizontalHeaderItem(15)
-        item.setText(_translate("MainWindow", "16"))
-        item = self.tableWidget.horizontalHeaderItem(16)
-        item.setText(_translate("MainWindow", "17"))
-        item = self.tableWidget.horizontalHeaderItem(17)
-        item.setText(_translate("MainWindow", "18"))
-        item = self.tableWidget.horizontalHeaderItem(18)
-        item.setText(_translate("MainWindow", "19"))
-        item = self.tableWidget.horizontalHeaderItem(19)
-        item.setText(_translate("MainWindow", "20"))
-        item = self.tableWidget.horizontalHeaderItem(20)
-        item.setText(_translate("MainWindow", "21"))
-        item = self.tableWidget.horizontalHeaderItem(21)
-        item.setText(_translate("MainWindow", "22"))
-        item = self.tableWidget.horizontalHeaderItem(22)
-        item.setText(_translate("MainWindow", "24"))
-        __sortingEnabled = self.listWidget.isSortingEnabled()
-        self.listWidget.setSortingEnabled(False)
-        item = self.listWidget.item(0)
-        item.setText(_translate("MainWindow", "1"))
-        item = self.listWidget.item(1)
-        item.setText(_translate("MainWindow", "2"))
-        item = self.listWidget.item(2)
-        item.setText(_translate("MainWindow", "3"))
-        item = self.listWidget.item(3)
-        item.setText(_translate("MainWindow", "4"))
-        item = self.listWidget.item(4)
-        item.setText(_translate("MainWindow", "5"))
-        item = self.listWidget.item(5)
-        item.setText(_translate("MainWindow", "6"))
-        item = self.listWidget.item(6)
-        item.setText(_translate("MainWindow", " "))
-        item = self.listWidget.item(7)
-        item.setText(_translate("MainWindow", " "))
-        item = self.listWidget.item(8)
-        item.setText(_translate("MainWindow", " "))
-        item = self.listWidget.item(9)
-        item.setText(_translate("MainWindow", " "))
-        item = self.listWidget.item(10)
-        item.setText(_translate("MainWindow", " "))
-        item = self.listWidget.item(11)
-        item.setText(_translate("MainWindow", " "))
-        self.listWidget.setSortingEnabled(__sortingEnabled)
+        for i in range(WELL_PLATE_ROWS.__len__()):
+            item = self.tableWidget.verticalHeaderItem(i)
+            item.setText(_translate("MainWindow", WELL_PLATE_ROWS[i]))
+            
+        for i in range(WELL_PLATE_LENGTH):
+            item = self.tableWidget.horizontalHeaderItem(i)
+            item.setText(_translate("MainWindow", str(i+1)))
+
         self.label.setText(_translate("MainWindow", "FOV"))
-        __sortingEnabled = self.listWidget_2.isSortingEnabled()
-        self.listWidget_2.setSortingEnabled(False)
-        item = self.listWidget_2.item(0)
-        item.setText(_translate("MainWindow", "1"))
-        item = self.listWidget_2.item(1)
-        item.setText(_translate("MainWindow", "2"))
-        item = self.listWidget_2.item(2)
-        item.setText(_translate("MainWindow", "3"))
-        item = self.listWidget_2.item(3)
-        item.setText(_translate("MainWindow", "4"))
-        item = self.listWidget_2.item(4)
-        item.setText(_translate("MainWindow", "5"))
-        item = self.listWidget_2.item(5)
-        item.setText(_translate("MainWindow", "6"))
-        self.listWidget_2.setSortingEnabled(__sortingEnabled)
-        self.label_2.setText(_translate("MainWindow", "Z"))
+        self.Zlabel.setText(_translate("MainWindow", "Z"))
+        self.Timelabel.setText(_translate("MainWindow", "Time"))
+    
+    def GRID_INITIALIZER(self, out_df, displaygui, inout_resource_gui, ImDisplay):
+        
+        ### initailize well plate grid
+        cols_in_use = np.unique(np.asarray(out_df['Column'], dtype=int))
+        rows_in_use = np.unique(np.asarray(out_df['Row'], dtype=int))
+        
+        for c in cols_in_use:
+            for r in rows_in_use:
+                
+                df_checker = out_df.loc[(out_df['Column'] == str(c)) & (out_df['Row'] == str(r))]
+                
+                if df_checker.empty == False:
+                    self.tableWidget.setItem(r-1, c-1, QtWidgets.QTableWidgetItem())
+                    self.tableWidget.item(r-1, c-1).setBackground(QtGui.QColor(10,200,10))
+        current_row = rows_in_use[0]-1
+        current_col = cols_in_use[0]-1
+        self.tableWidget.setCurrentCell(current_row, current_col)
+        self.on_click_table( out_df, displaygui, inout_resource_gui, ImDisplay)
+        
+    @pyqtSlot()
+    def on_click_table(self, out_df, displaygui, inout_resource_gui, ImDisplay):    
+        
+        for currentQTableWidgetItem in self.tableWidget.selectedItems():
+            img_row = currentQTableWidgetItem.row() + 1
+            img_col = currentQTableWidgetItem.column() + 1
+        df_checker = out_df.loc[(out_df['Column'] == str(img_col)) & (out_df['Row'] == str(img_row))]
+        self.Timelist.clear()
+        self.FOVlist.clear()
+        self.Zlist.clear()
+        #### initalizae FOV and Z list
+        
+        df_checker = out_df.loc[(out_df['Column'] == str(img_col)) & (out_df['Row'] == str(img_row))]
+        z_values = np.unique(np.asarray(df_checker['ZSlice'], dtype=int))
+        for i in range(z_values.__len__()):
+           
+            item = QtWidgets.QListWidgetItem()
+            self.Zlist.addItem(item)
+        
+        _translate = QtCore.QCoreApplication.translate
+        __sortingEnabled = self.Zlist.isSortingEnabled()
+        self.Zlist.setSortingEnabled(False)
+        for i in range(z_values.__len__()):
+            item = self.Zlist.item(i)
+            item.setText(_translate("MainWindow", str(i+1)))
+            
+            if i==0:
+                self.Zlist.setCurrentItem(item)
+              
+        self.Zlist.setSortingEnabled(__sortingEnabled)
 
+        ### Initialize FOV List
+        df_checker = out_df.loc[(out_df['Column'] == str(img_col)) & (out_df['Row'] == str(img_row))]
+        fov_values = np.unique(np.asarray(df_checker['FieldIndex'], dtype=int))
+            
+        for i in range(fov_values.__len__()):
+            
+            item = QtWidgets.QListWidgetItem()
+            self.FOVlist.addItem(item)
 
+        _translate = QtCore.QCoreApplication.translate
+        __sortingEnabled = self.FOVlist.isSortingEnabled()
+        self.FOVlist.setSortingEnabled(False)
+        for i in range(fov_values.__len__()):
+            item = self.FOVlist.item(i)
+            item.setText(_translate("MainWindow", str(i+1)))
+            
+            if i==0:
+                self.FOVlist.setCurrentItem(item)
+        
+        self.FOVlist.setSortingEnabled(__sortingEnabled)
+        ### Initialize Time List
+        df_checker = out_df.loc[(out_df['Column'] == str(img_col)) & (out_df['Row'] == str(img_row))]
+        time_values = np.unique(np.asarray(df_checker['TimePoint'], dtype=int))
+            
+        for i in range(time_values.__len__()):
+            
+            item = QtWidgets.QListWidgetItem()
+            self.Timelist.addItem(item)
+
+        _translate = QtCore.QCoreApplication.translate
+        __sortingEnabled = self.Timelist.isSortingEnabled()
+        self.Timelist.setSortingEnabled(False)
+        for i in range(time_values.__len__()):
+            item = self.Timelist.item(i)
+            item.setText(_translate("MainWindow", str(i+1)))
+            
+            if i==0:
+                self.Timelist.setCurrentItem(item)
+        
+        self.Timelist.setSortingEnabled(__sortingEnabled)
+        
+        
+        ImDisplay.grid_data[0] = img_col
+        ImDisplay.grid_data[1] = img_row
+        ImDisplay.grid_data[2] = 1
+        ImDisplay.grid_data[3] = 1
+        ImDisplay.grid_data[4] = 1
+        ImDisplay.GET_IMAGE_NAME(displaygui)
+        
+    def on_click_list(self, ImDisplay, displaygui):
+        
+        for currentQTableWidgetItem in self.tableWidget.selectedItems():
+            img_row = currentQTableWidgetItem.row() + 1
+            img_col = currentQTableWidgetItem.column() + 1
+            
+        
+        ImDisplay.grid_data[0] = img_col
+        ImDisplay.grid_data[1] = img_row
+        ImDisplay.grid_data[2] = self.Timelist.currentRow() + 1
+        ImDisplay.grid_data[3] = self.FOVlist.currentRow() + 1
+        ImDisplay.grid_data[4] = self.Zlist.currentRow() + 1
+        ImDisplay.GET_IMAGE_NAME(displaygui)
+            
+            
+            
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
