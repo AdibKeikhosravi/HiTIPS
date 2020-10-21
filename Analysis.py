@@ -11,7 +11,7 @@ class ImageAnalyzer(object):
     def __init__(self,analysisgui):
         self.AnalysisGui = analysisgui
 
-    def neuceli_segmenter(input_img, pixpermic = None):
+    def neuceli_segmenter(self, input_img, pixpermic = None):
         
         if self.AnalysisGui.NucDetectMethod.currentText() == "Image Processing":
             
@@ -36,7 +36,7 @@ class ImageAnalyzer(object):
                 boundary, mask = self.MMT_segmenter(input_img, pixpermic = None)
             
             
-            
+        return boundary, mask   
             
     def fibroblast_segmenter(self, input_img, pixpermic = None):       
             

@@ -33,7 +33,7 @@ class imagedisplayer(analyzer,QWidget):
         self.ch4_hist_max = 255
         self.ch4_hist_min = 0
         self.AnalysisGui = analysisgui
-        
+        self.ImageAnalyzer = ImageAnalyzer(self.AnalysisGui)
     def display_initializer(self, out_df, displaygui, IO_GUI):
             
             displaygui.setEnabled(True)
@@ -198,12 +198,12 @@ class imagedisplayer(analyzer,QWidget):
             All_Channels = cv2.addWeighted(ch1_rgb, 1, RGB_Channels, 1, 0)
             height, width, ch = np.shape(All_Channels)
             totalBytes = All_Channels.nbytes
-            #print(self.AnalysisGui.NucleiChannel.currentIndex().dtype)
+
             if displaygui.NuclMaskCheckBox.isChecked() == True:
                 
                 self.input_image = self.IMAGE_TO_BE_MASKED()
-                bound, filled_res = ImageAnalyzer.neuceli_segmenter(self.input_image)
-                #cv2.imwrite('mask_saved.jpg',bound)
+                bound, filled_res = self.ImageAnalyzer.neuceli_segmenter(self.input_image)
+
                 if displaygui.NucPreviewMethod.currentText() == "Boundary":
                     
                     All_Channels[bound != 0] = [255,0,0]
@@ -263,7 +263,7 @@ class imagedisplayer(analyzer,QWidget):
                                     (self.METADATA_DATAFRAME['FieldIndex'] == str(self.grid_data[3])) &  
                                     (self.METADATA_DATAFRAME['Channel'] == maskchannel)
                                     ]
-            loadedimg_formask = ImageAnalyzer.max_z_project(self.imgformask)
+            loadedimg_formask = self.ImageAnalyzer.max_z_project(self.imgformask)
             ImageForNucMask = cv2.normalize(loadedimg_formask, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
         else:
             
@@ -290,17 +290,17 @@ class imagedisplayer(analyzer,QWidget):
                                         (self.METADATA_DATAFRAME['FieldIndex'] == str(self.grid_data[3])) &  
                                         (self.METADATA_DATAFRAME['Channel'] == '1')
                                         ]
-                loadedimg_forspot = ImageAnalyzer.max_z_project(self.imgforspot)
+                loadedimg_forspot = self.ImageAnalyzer.max_z_project(self.imgforspot)
                 ImageForSpots = cv2.normalize(loadedimg_forspot, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-                coordinates = ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
-                ch1_spots_img = ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                coordinates = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
+                ch1_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
                 
             else:
 
                 loadedimg_forspots = mpimg.imread(self.imgchannels.loc[self.imgchannels['Channel']== '1']['ImageName'].iloc[0])
                 ImageForSpots = cv2.normalize(loadedimg_forspots, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-                coordinates = ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
-                ch1_spots_img = ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                coordinates = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
+                ch1_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
         
 
         if self.AnalysisGui.SpotCh2CheckBox.isChecked() == True:
@@ -313,17 +313,17 @@ class imagedisplayer(analyzer,QWidget):
                                         (self.METADATA_DATAFRAME['FieldIndex'] == str(self.grid_data[3])) &  
                                         (self.METADATA_DATAFRAME['Channel'] == '2')
                                         ]
-                loadedimg_forspot = ImageAnalyzer.max_z_project(self.imgforspot)
+                loadedimg_forspot = self.ImageAnalyzer.max_z_project(self.imgforspot)
                 ImageForSpots = cv2.normalize(loadedimg_forspot, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-                coordinates = ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
-                ch2_spots_img = ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                coordinates = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
+                ch2_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
                 
             else:
                 
                 loadedimg_forspots = mpimg.imread(self.imgchannels.loc[self.imgchannels['Channel']== '2']['ImageName'].iloc[0])
                 ImageForSpots = cv2.normalize(loadedimg_forspots, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-                coordinates = ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
-                ch2_spots_img = ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                coordinates = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
+                ch2_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
        
                 
         if self.AnalysisGui.SpotCh3CheckBox.isChecked() == True:
@@ -336,16 +336,16 @@ class imagedisplayer(analyzer,QWidget):
                                         (self.METADATA_DATAFRAME['FieldIndex'] == str(self.grid_data[3])) & 
                                         (self.METADATA_DATAFRAME['Channel'] == '3')
                                         ]
-                loadedimg_forspot = ImageAnalyzer.max_z_project(self.imgforspot)
+                loadedimg_forspot = self.ImageAnalyzer.max_z_project(self.imgforspot)
                 ImageForSpots = cv2.normalize(loadedimg_forspot, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-                coordinates = ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
-                ch3_spots_img = ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                coordinates = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
+                ch3_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
             else:
 
                 loadedimg_forspots = mpimg.imread(self.imgchannels.loc[self.imgchannels['Channel']== '3']['ImageName'].iloc[0])
                 ImageForSpots = cv2.normalize(loadedimg_forspots, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-                coordinates = ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
-                ch3_spots_img = ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                coordinates = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
+                ch3_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
         
                 
         if self.AnalysisGui.SpotCh4CheckBox.isChecked() == True:
@@ -358,17 +358,17 @@ class imagedisplayer(analyzer,QWidget):
                                         (self.METADATA_DATAFRAME['FieldIndex'] == str(self.grid_data[3])) &  
                                         (self.METADATA_DATAFRAME['Channel'] == '4')
                                         ]
-                loadedimg_forspot = ImageAnalyzer.max_z_project(self.imgforspot)
+                loadedimg_forspot = self.ImageAnalyzer.max_z_project(self.imgforspot)
                 ImageForSpots = cv2.normalize(loadedimg_forspot, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-                coordinates = ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
-                ch4_spots_img = ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                coordinates = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
+                ch4_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
                 
             else:
 
                 loadedimg_forspots = mpimg.imread(self.imgchannels.loc[self.imgchannels['Channel']== '4']['ImageName'].iloc[0])
                 ImageForSpots = cv2.normalize(loadedimg_forspots, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-                coordinates = ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
-                ch1_spots_img = ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                coordinates = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
+                ch1_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
             
         return ch1_spots_img, ch2_spots_img, ch3_spots_img, ch4_spots_img
 
