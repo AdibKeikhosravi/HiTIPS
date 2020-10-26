@@ -274,7 +274,7 @@ class ImageAnalyzer(object):
             labeled_spots, num_features = label(final_spots)
             spot_labels = np.unique(labeled_spots)
             
-            spot_locations = ndimage.measurements.center_of_mass(final_spots, labeled_spots, spot_labels[spot_labelsx>0])
+            spot_locations = ndimage.measurements.center_of_mass(final_spots, labeled_spots, spot_labels[spot_labels>0])
                         
         return spot_locations
     

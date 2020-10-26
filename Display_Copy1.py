@@ -221,23 +221,23 @@ class imagedisplayer(analyzer,QWidget):
                 self.input_image = self.IMAGE_TO_BE_MASKED()
                 ch1_spots_img, ch2_spots_img, ch3_spots_img, ch4_spots_img = self.IMAGE_FOR_SPOT_DETECTION(self.input_image)
 
-                if displaygui.SpotPreviewMethod.currentText() == "Dots":
+               
                     
-                    if ch1_spots_img!=[]:
-                    
-                        All_Channels[ch1_spots_img != 0] = [255,255,255]
-                        
-                    if ch2_spots_img!=[]:
-                    
-                        All_Channels[ch2_spots_img != 0] = [255,0,0]
-                        
-                    if ch3_spots_img!=[]:
-                    
-                        All_Channels[ch3_spots_img != 0] = [0,255,0]
-                        
-                    if ch4_spots_img!=[]:
-                    
-                        All_Channels[ch4_spots_img != 0] = [0,0,255]
+                if ch1_spots_img!=[]:
+
+                    All_Channels[ch1_spots_img != 0] = [255,255,255]
+
+                if ch2_spots_img!=[]:
+
+                    All_Channels[ch2_spots_img != 0] = [255,0,0]
+
+                if ch3_spots_img!=[]:
+
+                    All_Channels[ch3_spots_img != 0] = [0,255,0]
+
+                if ch4_spots_img!=[]:
+
+                    All_Channels[ch4_spots_img != 0] = [0,0,255]
                     
                     
                 if displaygui.NucPreviewMethod.currentText() == "Cross":

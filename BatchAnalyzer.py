@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import math
+import os
 from skimage.measure import regionprops, regionprops_table
 from scipy import ndimage
 from PIL import Image
@@ -37,7 +38,8 @@ class BatchAnalysis(object):
             for row in rows:
                 for fov in fovs:
                     for t in timepoints:
-                         for ai in actionindices:
+#                          for ai in actionindices:
+                            ai =1
                         
                             df_checker = Meta_Data_df.loc[(Meta_Data_df['Column'] == str(col)) & 
                                                           (Meta_Data_df['Row'] == str(row)) & 
@@ -63,10 +65,21 @@ class BatchAnalysis(object):
                                                         'centroid', 'orientation', 'major_axis_length', 'minor_axis_length',
                                                         'area', 'label' , 'max_intensity', 'min_intensity', 'mean_intensity',
                                                         'orientation', 'perimeter'))
-                                
+                                pixpermicron = np.asarray(df_checker["PixPerMic"].iloc[0]).astype(float)
                                 props_df = pd.DataFrame(props)
+                                props_df['major_axis_length'] = pixpermicron*props_df['major_axis_length']
+                                props_df['minor_axis_length'] = pixpermicron*props_df['minor_axis_length']
+                                props_df['area'] = pixpermicron*pixpermicron*props_df['area']
+                                props_df['perimeter'] = pixpermicron*props_df['perimeter']
                                 image_cells_df = pd.concat([df,props_df], axis=1)
                                 cell_df = pd.concat([cell_df, image_cells_df], axis=0, ignore_index=True)
+                                
+                                if self.AnalysisGui.NucMaskCheckBox.isChecked() == True:
+                                    
+                                    mask_file_name = ['Nuclei_Mask_for_Col' + str(col) + r'_row' + str(row)+
+                                                      r'_Time' + str(t) + r'_Field' + str(fov) + r'.jpg']
+                                    mask_full_name = os.path.join(inout_resource_gui.Output_dir, mask_file_name[0])
+                                    cv2.imwrite(mask_full_name,nuc_mask)
                                 
                             else:
                                 
@@ -163,36 +176,65 @@ class BatchAnalysis(object):
                                                 ch5_spot_df=pd.concat([ch5_spot_df, df_ch5],ignore_index=True)
                                                                                 
                                                                                 
-                                        
-        cell_df.to_excel('cell_df.xlsx')
+        if self.AnalysisGui.NucInfoChkBox.isChecked() == True:
+            
+            xlsx_name = ['Nuclei_Information.xlsx']
+            xlsx_full_name = os.path.join(inout_resource_gui.Output_dir, xlsx_name[0])
+            
+            cell_df.to_excel(xlsx_full_name)
         
         if ch1_spot_df.empty == False:
             
-            ch1_spot_df.to_excel('ch1_spot_df.xlsx')
+            if self.AnalysisGui.NucInfoChkBox.isChecked() == True:
+                coordinates_method = self.AnalysisGui.SpotLocationCbox.currentText()
+                xlsx_name = ['Ch1_Spot_Locations_' + coordinates_method + r'.xlsx']
+                xlsx_full_name = os.path.join(inout_resource_gui.Output_dir, xlsx_name[0])
+                ch1_spot_df.to_excel(xlsx_full_name)
             
         if ch2_spot_df.empty == False:
             
-            ch2_spot_df.to_excel('ch2_spot_df.xlsx')    
+            if self.AnalysisGui.NucInfoChkBox.isChecked() == True:
+                coordinates_method = self.AnalysisGui.SpotLocationCbox.currentText()
+                xlsx_name = ['Ch2_Spot_Locations_' + coordinates_method + r'.xlsx']
+                xlsx_full_name = os.path.join(inout_resource_gui.Output_dir, xlsx_name[0])
+                ch2_spot_df.to_excel(xlsx_full_name)   
             
         if ch3_spot_df.empty == False:
             
-            ch3_spot_df.to_excel('ch3_spot_df.xlsx')   
+            if self.AnalysisGui.NucInfoChkBox.isChecked() == True:
+                coordinates_method = self.AnalysisGui.SpotLocationCbox.currentText()
+                xlsx_name = ['Ch3_Spot_Locations_' + coordinates_method + r'.xlsx']
+                xlsx_full_name = os.path.join(inout_resource_gui.Output_dir, xlsx_name[0])
+                ch3_spot_df.to_excel(xlsx_full_name)   
             
         if ch4_spot_df.empty == False:
             
-            ch4_spot_df.to_excel('ch4_spot_df.xlsx')    
+            if self.AnalysisGui.NucInfoChkBox.isChecked() == True:
+                coordinates_method = self.AnalysisGui.SpotLocationCbox.currentText()
+                xlsx_name = ['Ch4_Spot_Locations_' + coordinates_method + r'.xlsx']
+                xlsx_full_name = os.path.join(inout_resource_gui.Output_dir, xlsx_name[0])
+                ch4_spot_df.to_excel(xlsx_full_name) 
             
         if ch5_spot_df.empty == False:
             
-            ch5_spot_df.to_excel('ch5_spot_df.xlsx')    
+            if self.AnalysisGui.NucInfoChkBox.isChecked() == True:
+                coordinates_method = self.AnalysisGui.SpotLocationCbox.currentText()
+                xlsx_name = ['Ch5_Spot_Locations_' + coordinates_method + r'.xlsx']
+                xlsx_full_name = os.path.join(inout_resource_gui.Output_dir, xlsx_name[0])
+                ch5_spot_df.to_excel(xlsx_full_name)   
             
+        if self.AnalysisGui.SpotsDistance.isChecked() == True:
             
-        spot_distances = self.Calculate_Spot_Distances( cell_df, ch1_spot_df, ch2_spot_df, ch3_spot_df, ch4_spot_df, ch5_spot_df, df_checker)
-        
-        with pd.ExcelWriter('HiC_data_all.xlsx') as writer:  
-            for key in spot_distances.keys():
-                
-                spot_distances[key].to_excel(writer, sheet_name = key)
+            spot_distances = self.Calculate_Spot_Distances( cell_df, ch1_spot_df, ch2_spot_df, ch3_spot_df, ch4_spot_df, ch5_spot_df, df_checker)
+            
+            coordinates_method = self.AnalysisGui.SpotLocationCbox.currentText()
+            xlsx_name = ['Spot_Distances_' + coordinates_method + r'.xlsx']
+            xlsx_full_name = os.path.join(inout_resource_gui.Output_dir, xlsx_name[0])
+            
+            with pd.ExcelWriter(xlsx_full_name) as writer:  
+                for key in spot_distances.keys():
+
+                    spot_distances[key].to_excel(writer, sheet_name = key)
                             
                             
     def Calculate_Spot_Distances(self, cell_df, ch1_spot_df, ch2_spot_df, ch3_spot_df, ch4_spot_df, ch5_spot_df, df_checker):

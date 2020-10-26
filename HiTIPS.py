@@ -116,7 +116,6 @@ class ControlPanel(QWidget):
         
         
         self.displaygui.SpotsCheckBox.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
-        self.displaygui.SpotPreviewMethod.currentIndexChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
         
         
         ####### Analysis Gui Controllers
@@ -199,9 +198,9 @@ class ControlPanel(QWidget):
         self.fnames, _ = QtWidgets.QFileDialog.getOpenFileNames(self, 'Select Image Files...',
                                                                 '', "Image files (*.tiff *tif  *.jpg); MLF files (*.mlf)"
                                                                 , options=options)
-        
-        filename, file_extension = os.path.splitext(self.fnames[0])
-        self.READ_FROM_METADATA(self.fnames[0])
+        if self.fnames:
+            filename, file_extension = os.path.splitext(self.fnames[0])
+            self.READ_FROM_METADATA(self.fnames[0])
         
 
             

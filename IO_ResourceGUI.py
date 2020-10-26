@@ -2,7 +2,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QWidget
 
 class InOut_resource(QWidget):
-
+    Output_dir = []
     def __init__(self, centralwidget):
         super().__init__(centralwidget)
         
@@ -34,6 +34,7 @@ class InOut_resource(QWidget):
         self.OutFldrButton = QtWidgets.QPushButton(self.IO)
         self.OutFldrButton.setGeometry(QtCore.QRect(405, 9, 124, 32))
         self.OutFldrButton.setObjectName("OutFldrButton")
+        self.OutFldrButton.clicked.connect(lambda: self.OUTPUT_FOLDER_LOADBTN())
         
         self.NumFilesLoadedLbl = QtWidgets.QLabel(self.IO)
         self.NumFilesLoadedLbl.setGeometry(QtCore.QRect(10, 48, 148, 18))
@@ -119,3 +120,8 @@ class InOut_resource(QWidget):
         self.CPUAvailLabel.setText(_translate("MainWindow", "CPU Cores Are Available, Use"))
         self.CPUsInUseLabel.setText(_translate("MainWindow", "Core(s)"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.Resources), _translate("MainWindow", "Available Resources"))
+    
+    def OUTPUT_FOLDER_LOADBTN(self):
+        
+        options = QtWidgets.QFileDialog.Options()
+        self.Output_dir = QtWidgets.QFileDialog.getExistingDirectory(self, caption= "Select Output Directory", options=options)

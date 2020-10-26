@@ -361,8 +361,8 @@ class analyzer(QWidget):
         self.SpotMaxZProject.setText(_translate("MainWindow", "Max Z-projection"))
         self.SpotLocationLbl.setText(_translate("MainWindow", "Coordinates:"))
         
-        self.SpotLocationCbox.setItemText(0, _translate("MainWindow", "Center Of Mass"))
-        self.SpotLocationCbox.setItemText(1, _translate("MainWindow", "Max Intensity"))
+        self.SpotLocationCbox.setItemText(0, _translate("MainWindow", "CenterOfMass"))
+        self.SpotLocationCbox.setItemText(1, _translate("MainWindow", "MaxIntensity"))
         self.SpotLocationCbox.setItemText(2, _translate("MainWindow", "Cnetroid"))
         
         ### spot analysis
@@ -394,7 +394,7 @@ class analyzer(QWidget):
         self.AnalysisMode.setItemText(self.AnalysisMode.indexOf(self.SpotDetection), _translate("MainWindow", "Spot Detection"))
         self.AnalysisMode.setItemText(self.AnalysisMode.indexOf(self.SpotAnalysis), _translate("MainWindow", "Spot Analysis"))
         self.NucMaskCheckBox.setText(_translate("MainWindow", "Nuclei Mask"))
-        self.SpotsDistance.setText(_translate("MainWindow", "Spots Distance"))
+        self.SpotsDistance.setText(_translate("MainWindow", "Spots' Distances"))
         self.SpotsCircles.setText(_translate("MainWindow", "Spots Mask(circles)"))
         self.NucInfoChkBox.setText(_translate("MainWindow", "Nuceli Info"))
         self.SpotsLocation.setText(_translate("MainWindow", "Spots Location"))
