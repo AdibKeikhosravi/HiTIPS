@@ -1,30 +1,37 @@
 import numpy as np
 import cv2
+import math
 from skimage.measure import regionprops, regionprops_table
 from scipy import ndimage
 from PIL import Image
 import pandas as pd
 import matplotlib.image as mpimg
 from PIL import Image, ImageQt
-from Analysis import ImageAnalyzer
 from scipy.ndimage import label
 from joblib import Parallel, delayed
 WELL_PLATE_ROWS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
 
 class BatchAnalysis(object):
-    def __init__(self,analysisgui):
+    
+    def __init__(self,analysisgui, image_analyzer):
+        
         self.AnalysisGui = analysisgui
+        self.ImageAnalyzer = image_analyzer
+        
     def ON_APPLYBUTTON(self, Meta_Data_df, displaygui, inout_resource_gui, ImDisplay, PlateGrid):
         
         ch1_spot_df, ch2_spot_df, ch3_spot_df, ch4_spot_df, ch5_spot_df, cell_df = pd.DataFrame(), pd.DataFrame(), pd.DataFrame(),pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
-        df_cols = [ "Column", "Row", "Time Point", "Field Index", "ZSlice", "Channel", "Action Index"]
         
         displaygui.setEnabled(False)
         columns = np.unique(np.asarray(Meta_Data_df['Column'], dtype=int))
+        columns = columns[:1]
         rows = np.unique(np.asarray(Meta_Data_df['Row'], dtype=int))
+        rows = rows[:2]
         fovs = np.unique(np.asarray(Meta_Data_df['FieldIndex'], dtype=int))
+        fovs = fovs[:3]
         timepoints = np.unique(np.asarray(Meta_Data_df['TimePoint'], dtype=int))
         actionindices = np.unique(np.asarray(Meta_Data_df['ActionIndex'], dtype=int))
+        actionindices = actionindices[:1]
 
         for col in columns:
             for row in rows:
@@ -32,23 +39,24 @@ class BatchAnalysis(object):
                     for t in timepoints:
                          for ai in actionindices:
                         
-                            df_checker = Meta_Data_df.loc[(Meta_Data_df['Column'] == str(col)) & (Meta_Data_df['Row'] == str(row)) & 
-                                                    (Meta_Data_df['FieldIndex'] == str(fov)) & (Meta_Data_df['TimePoint'] == str(t))]
-                            
+                            df_checker = Meta_Data_df.loc[(Meta_Data_df['Column'] == str(col)) & 
+                                                          (Meta_Data_df['Row'] == str(row)) & 
+                                                          (Meta_Data_df['FieldIndex'] == str(fov)) & 
+                                                          (Meta_Data_df['TimePoint'] == str(t))]
                                     
                             ImageForNucMask = self.IMG_FOR_NUC_MASK(df_checker)
                             
                             if ImageForNucMask.ndim ==2:
-
-                                nuc_bndry, nuc_mask = ImageAnalyzer.neuceli_segmenter(ImageForNucMask)
+                            
+                                nuc_bndry, nuc_mask = self.ImageAnalyzer.neuceli_segmenter(ImageForNucMask)
                                 labeled_nuc, number_nuc = label(nuc_mask)
                                 nuc_labels = np.unique(labeled_nuc)
-
+                            
                                 nuc_centroid_locations = ndimage.measurements.center_of_mass(nuc_mask, labeled_nuc, 
                                                                                              nuc_labels[nuc_labels>0])
                                 data = { "Column": [col]*number_nuc, "Row": [row]*number_nuc, 
-                                         "Time Point": [t]*number_nuc, "Field Index": [fov]*number_nuc,
-                                         "ZSlice": ["max project"]*number_nuc}
+                                         "TimePoint": [t]*number_nuc, "FieldIndex": [fov]*number_nuc,
+                                         "ZSlice": ["max project"]*number_nuc, "ActionIndex":[ai]*number_nuc}
                                 df = pd.DataFrame(data)
                                 regions = regionprops(labeled_nuc, ImageForNucMask)
                                 props = regionprops_table(labeled_nuc, ImageForNucMask, properties=(
@@ -56,8 +64,9 @@ class BatchAnalysis(object):
                                                         'area', 'label' , 'max_intensity', 'min_intensity', 'mean_intensity',
                                                         'orientation', 'perimeter'))
                                 
-                                cell_df1 = pd.DataFrame(props)
-                                cell_df = pd.concat([df,cell_df1], axis=1)
+                                props_df = pd.DataFrame(props)
+                                image_cells_df = pd.concat([df,props_df], axis=1)
+                                cell_df = pd.concat([cell_df, image_cells_df], axis=0, ignore_index=True)
                                 
                             else:
                                 
@@ -69,42 +78,36 @@ class BatchAnalysis(object):
                             if self.AnalysisGui.NucMaxZprojectCheckBox.isChecked() == True:
 
                                 if self.AnalysisGui.SpotMaxZProject.isChecked() == True:
-                                    #with pd.ExcelWriter('output.xlsx', engine="openpyxl", mode='a') as writer:  
                                             
                                         if self.AnalysisGui.SpotCh1CheckBox.isChecked() == True:
                                             if ch1_xyz!=[]:
                                                 ch1_xyz_round = np.round(np.asarray(ch1_xyz)).astype('int')
                                                 ch1_spot_nuc_labels = labeled_nuc[ch1_xyz_round[:,0], ch1_xyz_round[:,1]]
                                                 ch1_num_spots = ch1_xyz.__len__()
-                                                added_columns = ["cell index","ch1_x_location","ch1_y_location","ch1_z_location"]
-                                                df_cols.append(added_columns)
 
                                                 data = { "Column": [col]*ch1_num_spots, "Row": [row]*ch1_num_spots, 
-                                                         "Time Point": [t]*ch1_num_spots, "Field Index": [fov]*ch1_num_spots,
+                                                         "TimePoint": [t]*ch1_num_spots, "FieldIndex": [fov]*ch1_num_spots,
                                                          "ZSlice": ["max project"]*ch1_num_spots, "Channel": [1]*ch1_num_spots,
-                                                         "Action Index": [ai]*ch1_num_spots, "cell index": ch1_spot_nuc_labels,
-                                                         "ch1_x_location": ch1_xyz[:,0], "ch1_y_location": ch1_xyz[:,1],
-                                                         "ch1_z_location": ch1_xyz[:,2]}
-                                                df = pd.DataFrame(data)
-                                                ch1_spot_df=pd.concat([ch1_spot_df,df],ignore_index=True)
+                                                         "ActionIndex": [ai]*ch1_num_spots, "cell index": ch1_spot_nuc_labels,
+                                                         "x_location": ch1_xyz[:,0], "y_location": ch1_xyz[:,1],
+                                                         "z_location": ch1_xyz[:,2]}
+                                                df_ch1 = pd.DataFrame(data)
+                                                ch1_spot_df=pd.concat([ch1_spot_df,df_ch1],ignore_index=True)
                                                 
-
                                         if self.AnalysisGui.SpotCh2CheckBox.isChecked() == True:
                                             if ch2_xyz!=[]:
                                                 ch2_xyz_round = np.round(np.asarray(ch2_xyz)).astype('int')
                                                 ch2_spot_nuc_labels = labeled_nuc[ch2_xyz_round[:,0], ch2_xyz_round[:,1]]
                                                 ch2_num_spots = ch2_xyz.__len__()
-                                                added_columns = ["cell index","ch2_x_location","ch2_y_location","ch2_z_location"]
-                                                df_cols.append(added_columns)
-
+                                                
                                                 data = { "Column": [col]*ch2_num_spots, "Row": [row]*ch2_num_spots, 
-                                                         "Time Point": [t]*ch2_num_spots, "Field Index": [fov]*ch2_num_spots,
+                                                         "TimePoint": [t]*ch2_num_spots, "FieldIndex": [fov]*ch2_num_spots,
                                                          "ZSlice": ["max project"]*ch2_num_spots, "Channel": [2]*ch2_num_spots,
-                                                         "Action Index": [ai]*ch2_num_spots, "cell index": ch2_spot_nuc_labels,
-                                                         "ch2_x_location": ch2_xyz[:,0], "ch2_y_location": ch2_xyz[:,1],
-                                                         "ch2_z_location": ch2_xyz[:,2]}
-                                                df = pd.DataFrame(data)
-                                                ch2_spot_df=pd.concat([ch2_spot_df,df],ignore_index=True)
+                                                         "ActionIndex": [ai]*ch2_num_spots, "cell index": ch2_spot_nuc_labels,
+                                                         "x_location": ch2_xyz[:,0], "y_location": ch2_xyz[:,1],
+                                                         "z_location": ch2_xyz[:,2]}
+                                                df_ch2 = pd.DataFrame(data)
+                                                ch2_spot_df=pd.concat([ch2_spot_df,df_ch2],ignore_index=True)
                                                
                                         if self.AnalysisGui.SpotCh3CheckBox.isChecked() == True:
                                             if ch3_xyz!=[]:
@@ -112,17 +115,16 @@ class BatchAnalysis(object):
                                                 ch3_xyz_round = np.round(np.asarray(ch3_xyz)).astype('int')
                                                 ch3_spot_nuc_labels = labeled_nuc[ch3_xyz_round[:,0], ch3_xyz_round[:,1]]
                                                 ch3_num_spots = ch3_xyz.__len__()
-                                                added_columns = ["cell index","ch3_x_location","ch3_y_location","ch3_z_location"]
-                                                df_cols.append(added_columns)
+                                            
                                                 data = { "Column": [col]*ch3_num_spots, "Row": [row]*ch3_num_spots, 
-                                                         "Time Point": [t]*ch3_num_spots, "Field Index": [fov]*ch3_num_spots,
+                                                         "TimePoint": [t]*ch3_num_spots, "FieldIndex": [fov]*ch3_num_spots,
                                                          "ZSlice": ["max project"]*ch3_num_spots, "Channel": [3]*ch3_num_spots,
-                                                         "Action Index": [ai]*ch3_num_spots, "cell index": ch3_spot_nuc_labels,
-                                                         "ch3_x_location": ch3_xyz[:,0], "ch3_y_location": ch3_xyz[:,1],
-                                                         "ch3_z_location": ch3_xyz[:,2]}
+                                                         "ActionIndex": [ai]*ch3_num_spots, "cell index": ch3_spot_nuc_labels,
+                                                         "x_location": ch3_xyz[:,0], "y_location": ch3_xyz[:,1],
+                                                         "z_location": ch3_xyz[:,2]}
 
-                                                df = pd.DataFrame(data)
-                                                ch3_spot_df=pd.concat([ch3_spot_df,df],ignore_index=True)
+                                                df_ch3 = pd.DataFrame(data)
+                                                ch3_spot_df=pd.concat([ch3_spot_df, df_ch3],ignore_index=True)
                                                 
                                         if self.AnalysisGui.SpotCh4CheckBox.isChecked() == True:
                                             if ch4_xyz!=[]:
@@ -130,18 +132,16 @@ class BatchAnalysis(object):
                                                 ch4_xyz_round = np.round(np.asarray(ch4_xyz)).astype('int')
                                                 ch4_spot_nuc_labels = labeled_nuc[ch4_xyz_round[:,0], ch4_xyz_round[:,1]]
                                                 ch4_num_spots = ch4_xyz.__len__()
-                                                added_columns = ["cell index","ch4_x_location","ch4_y_location","ch4_z_location"]
-                                                df_cols.append(added_columns)
 
                                                 data = { "Column": [col]*ch4_num_spots, "Row": [row]*ch4_num_spots, 
-                                                         "Time Point": [t]*ch4_num_spots, "Field Index": [fov]*ch4_num_spots,
+                                                         "TimePoint": [t]*ch4_num_spots, "FieldIndex": [fov]*ch4_num_spots,
                                                          "ZSlice": ["max project"]*ch4_num_spots, "Channel": [4]*ch4_num_spots,
-                                                         "Action Index": [ai]*ch4_num_spots, "cell index": ch4_spot_nuc_labels,
-                                                         "ch4_x_location": ch4_xyz[:,0], "ch4_y_location": ch4_xyz[:,1],
-                                                         "ch4_z_location": ch4_xyz[:,2]}
+                                                         "ActionIndex": [ai]*ch4_num_spots, "cell index": ch4_spot_nuc_labels,
+                                                         "x_location": ch4_xyz[:,0], "y_location": ch4_xyz[:,1],
+                                                         "z_location": ch4_xyz[:,2]}
 
-                                                df = pd.DataFrame(data)
-                                                ch4_spot_df=pd.concat([ch4_spot_df,df],ignore_index=True)
+                                                df_ch4 = pd.DataFrame(data)
+                                                ch4_spot_df=pd.concat([ch4_spot_df, df_ch4],ignore_index=True)
                                                 
 
                                         if self.AnalysisGui.SpotCh5CheckBox.isChecked() == True:
@@ -150,20 +150,22 @@ class BatchAnalysis(object):
                                                 ch5_xyz_round = np.round(np.asarray(ch5_xyz)).astype('int')
                                                 ch5_spot_nuc_labels = labeled_nuc[ch5_xyz_round[:,0], ch5_xyz_round[:,1]]
                                                 ch5_num_spots = ch5_xyz.__len__()
-                                                added_columns = ["cell index","ch5_x_location","ch5_y_location","ch5_z_location"]
-                                                df_cols.append(added_columns)
+                                                
 
                                                 data = { "Column": [col]*ch5_num_spots, "Row": [row]*ch5_num_spots, 
-                                                         "Time Point": [t]*ch5_num_spots, "Field Index": [fov]*ch5_num_spots,
+                                                         "TimePoint": [t]*ch5_num_spots, "FieldIndex": [fov]*ch5_num_spots,
                                                          "ZSlice": ["max project"]*ch5_num_spots, "Channel": [5]*ch5_num_spots,
-                                                         "Action Index": [ai]*ch5_num_spots, "cell index": ch5_spot_nuc_labels,
-                                                         "ch5_x_location": ch5_xyz[:,0], "ch5_y_location": ch5_xyz[:,1],
-                                                         "ch5_z_location": ch5_xyz[:,2]}
+                                                         "ActionIndex": [ai]*ch5_num_spots, "cell index": ch5_spot_nuc_labels,
+                                                         "x_location": ch5_xyz[:,0], "y_location": ch5_xyz[:,1],
+                                                         "z_location": ch5_xyz[:,2]}
 
-                                                df = pd.DataFrame(data)
-                                                ch4_spot_df=pd.concat([ch4_spot_df,df],ignore_index=True)
-                                            
-                                    
+                                                df_ch5 = pd.DataFrame(data)
+                                                ch5_spot_df=pd.concat([ch5_spot_df, df_ch5],ignore_index=True)
+                                                                                
+                                                                                
+                                        
+        cell_df.to_excel('cell_df.xlsx')
+        
         if ch1_spot_df.empty == False:
             
             ch1_spot_df.to_excel('ch1_spot_df.xlsx')
@@ -185,19 +187,153 @@ class BatchAnalysis(object):
             ch5_spot_df.to_excel('ch5_spot_df.xlsx')    
             
             
+        spot_distances = self.Calculate_Spot_Distances( cell_df, ch1_spot_df, ch2_spot_df, ch3_spot_df, ch4_spot_df, ch5_spot_df, df_checker)
         
-                                                    
+        with pd.ExcelWriter('HiC_data_all.xlsx') as writer:  
+            for key in spot_distances.keys():
+                
+                spot_distances[key].to_excel(writer, sheet_name = key)
                             
                             
-                            
-                                
-                                
+    def Calculate_Spot_Distances(self, cell_df, ch1_spot_df, ch2_spot_df, ch3_spot_df, ch4_spot_df, ch5_spot_df, df_checker):
+        spot_distances = {}
+        for index, df_row in cell_df.iterrows():
+            
+            
+            col = np.asarray(df_row['Column'], dtype=int)
+            row = np.asarray(df_row['Row'], dtype=int)
+            timepoint = np.asarray(df_row['TimePoint'], dtype=int)
+            fieldindex = np.asarray(df_row['FieldIndex'], dtype=int)
+            zslice = df_row['ZSlice']
+            actionindex = np.asarray(df_row['ActionIndex'], dtype=int)
+            cell_label = np.asarray(df_row['label'], dtype=int)
+            spot_pd_dict = {}
+            
+            if ch1_spot_df.empty == False:
+                
+                cell_spots_ch1 = ch1_spot_df.loc[(ch1_spot_df['Column'] == col) & (ch1_spot_df['Row'] == row) & 
+                                      (ch1_spot_df['TimePoint'] == timepoint) & 
+                                      (ch1_spot_df['FieldIndex'] == fieldindex)& 
+                                      (ch1_spot_df['cell index']== cell_label )& 
+                                      (ch1_spot_df['ActionIndex']== actionindex)&
+                                      (ch1_spot_df['ZSlice']== zslice) ] 
+                
+                spot_pd_dict['ch1'] = cell_spots_ch1
+                
+                
+            if ch2_spot_df.empty == False:
+                
+                cell_spots_ch2 = ch2_spot_df.loc[(ch2_spot_df['Column'] == col) & (ch2_spot_df['Row'] == row) & 
+                                      (ch2_spot_df['TimePoint'] == timepoint) & 
+                                      (ch2_spot_df['FieldIndex'] == fieldindex)& 
+                                      (ch2_spot_df['cell index']== cell_label )& 
+                                      (ch2_spot_df['ActionIndex']== actionindex)&
+                                      (ch2_spot_df['ZSlice']== zslice) ] 
+                
+                spot_pd_dict['ch2'] = cell_spots_ch2
+
+            if ch3_spot_df.empty == False:
+                
+                cell_spots_ch3 = ch3_spot_df.loc[(ch3_spot_df['Column'] == col) & (ch3_spot_df['Row'] == row) & 
+                                      (ch3_spot_df['TimePoint'] == timepoint) & 
+                                      (ch3_spot_df['FieldIndex'] == fieldindex)& 
+                                      (ch3_spot_df['cell index'] == cell_label )& 
+                                      (ch3_spot_df['ActionIndex'] == actionindex)&
+                                      (ch3_spot_df['ZSlice'] == zslice) ] 
+                
+                spot_pd_dict['ch3'] = cell_spots_ch3
                         
+            if ch4_spot_df.empty == False:
+                
+                cell_spots_ch4 = ch4_spot_df.loc[(ch4_spot_df['Column'] == col) & (ch4_spot_df['Row'] == row) & 
+                                      (ch4_spot_df['TimePoint'] == timepoint) & 
+                                      (ch4_spot_df['FieldIndex'] == fieldindex)& 
+                                      (ch4_spot_df['cell index'] == cell_label )& 
+                                      (ch4_spot_df['ActionIndex'] == actionindex)&
+                                      (ch4_spot_df['ZSlice'] == zslice)] 
+                
+                spot_pd_dict['ch4'] = cell_spots_ch4
+                
+            if ch5_spot_df.empty == False:
+                
+                cell_spots_ch5 = ch5_spot_df.loc[(ch5_spot_df['Column'] == col) & (ch5_spot_df['Row'] == row) & 
+                                      (ch5_spot_df['TimePoint'] == timepoint) & 
+                                      (ch5_spot_df['FieldIndex'] == fieldindex)& 
+                                      (ch5_spot_df['cell index'] == cell_label)& 
+                                      (ch5_spot_df['ActionIndex'] == actionindex)&
+                                      (ch5_spot_df['ZSlice'] == zslice)] 
+                
+                spot_pd_dict['ch5'] = cell_spots_ch5
+            
+            ch_distances = []
+                   
+            for key1 in spot_pd_dict.keys():
+                for key2 in spot_pd_dict.keys():
+                    
+                    ch_distance1 = key2 + r'_' + key1
+                    if ch_distance1 in ch_distances:
+                        pass
+                    else:
+                        ch_distance = key1 + r'_' + key2
+                        ch_distances.append(ch_distance)
+                        
+                        if ch_distance not in spot_distances:
+                            spot_distances[ch_distance] = pd.DataFrame()
                             
+                        dist_pd = self.DISTANCE_calculator(spot_pd_dict,key1,key2, df_checker)
 
+                        num_distances = dist_pd.__len__()          
+                        data = { "Column": [col]*num_distances, "Row": [row]*num_distances, 
+                                 "TimePoint": [timepoint]*num_distances, "FieldIndex": [fieldindex]*num_distances,
+                                 "ZSlice": ["max project"]*num_distances, "ActionIndex": [actionindex]*num_distances, 
+                                 "cell index": [cell_label]*num_distances}
 
-                            
+                        temp_df = pd.DataFrame(data)
+                        
+                        temp_df = pd.concat([temp_df, dist_pd],axis=1)
+                        spot_distances[ch_distance]=pd.concat([spot_distances[ch_distance], temp_df],ignore_index=True)
 
+        return spot_distances            
+                    
+                                                        
+    def DISTANCE_calculator(self, spot_pd_dict, key1, key2, df_checker):
+        
+        loci1 = spot_pd_dict[key1]
+        loci2 = spot_pd_dict[key2]
+        dist_pd = pd.DataFrame()
+        
+        for ind1, locus1 in loci1.iterrows():
+            for ind2, locus2 in loci2.iterrows():
+
+                dist_2d =  math.sqrt(
+                                    math.pow((locus1['x_location'] - locus2['x_location']),2) +
+                                    math.pow((locus1['y_location'] - locus2['y_location']),2) 
+                                    )
+
+                dist_3d =  math.sqrt(
+                                    math.pow((locus1['x_location'] - locus2['x_location']),2) +
+                                    math.pow((locus1['y_location'] - locus2['y_location']),2) +
+                                    math.pow((locus1['z_location'] - locus2['z_location']),2)
+                                    )
+                
+                s1 = key1 + '_spot_index(1)'
+                s2 = key2 + '_spot_index(2)'
+                data = { str(s1): [ind1], str(s2): [ind2], 
+                        'XY-Disance(pixels)': [dist_2d], 'XYZ-Distnce(pixels)': [dist_3d],
+                        'XY-Disance(micron)': [dist_2d*np.asarray(df_checker["PixPerMic"].iloc[0]).astype(float)], 
+                        'XYZ-Distnce(micron)':[dist_3d*np.asarray(df_checker["PixPerMic"].iloc[0]).astype(float)]}
+                temp_df = pd.DataFrame(data)
+                dist_pd = pd.concat([dist_pd, temp_df], ignore_index=True)
+
+        return dist_pd
+                
+                
+                
+            
+        
+        
+    
+        
 
 
 
@@ -216,7 +352,7 @@ class BatchAnalysis(object):
 
                 maskchannel = str(self.AnalysisGui.NucleiChannel.currentIndex()+1)
                 imgformask = df_checker.loc[(df_checker['Channel'] == maskchannel)]
-                loadedimg_formask = ImageAnalyzer.max_z_project(imgformask)
+                loadedimg_formask = self.ImageAnalyzer.max_z_project(imgformask)
                 ImageForNucMask = cv2.normalize(loadedimg_formask, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
 
             else:
@@ -240,7 +376,7 @@ class BatchAnalysis(object):
         for z in range(z_plane):
 
             single_z_img = ImageForNucMask[:,:,z]
-            nuc_bndry_single, nuc_mask_single = ImageAnalyzer.neuceli_segmenter(single_z_img)
+            nuc_bndry_single, nuc_mask_single = self.ImageAnalyzer.neuceli_segmenter(single_z_img)
 
             nuc_bndry_list.append( np.asarray(nuc_bndry_single))
             nuc_mask_list.append( np.asarray(nuc_mask_single))
@@ -308,7 +444,7 @@ class BatchAnalysis(object):
             im = mpimg.imread(row['ImageName'])
             _z_coordinates1 = np.asarray(row['ZSlice']).astype('float')
             im_uint8 = cv2.normalize(im, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-            coordinates = ImageAnalyzer.SpotDetector(im_uint8, self.AnalysisGui, ImageForNucMask)
+            coordinates = self.ImageAnalyzer.SpotDetector(im_uint8, self.AnalysisGui, ImageForNucMask)
             
             if coordinates.__len__()>0:
                 _z_coordinates = np.ones((coordinates.__len__(),1), dtype='float')*_z_coordinates1
@@ -323,7 +459,7 @@ class BatchAnalysis(object):
         coordinates_stack = np.stack(coordinates_list, axis=2)
         image_stack = np.stack(z_imglist, axis=2)
         max_project = image_stack.max(axis=2)
-        coordinates_max_project = ImageAnalyzer.SpotDetector(im_uint8, self.AnalysisGui, ImageForNucMask)
+        coordinates_max_project = self.ImageAnalyzer.SpotDetector(im_uint8, self.AnalysisGui, ImageForNucMask)
         if coordinates_max_project.__len__()>0:
             coordinates_max_project_round = np.round(np.asarray(coordinates_max_project)).astype('int')
             spots_z_slices = np.argmax(image_stack[coordinates_max_project_round[:,0],coordinates_max_project_round[:,1],:], axis=1)
@@ -340,3 +476,19 @@ class BatchAnalysis(object):
             
             
         return xyz_coordinates, coordinates_stack
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

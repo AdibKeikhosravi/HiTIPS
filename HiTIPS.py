@@ -120,7 +120,7 @@ class ControlPanel(QWidget):
         
         
         ####### Analysis Gui Controllers
-        self.batchanalysis = BatchAnalyzer.BatchAnalysis(self.analysisgui)
+        self.batchanalysis = BatchAnalyzer.BatchAnalysis(self.analysisgui, self.image_analyzer)
         self.analysisgui.NucMaxZprojectCheckBox.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
         self.analysisgui.SpotMaxZProject.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
         
@@ -148,8 +148,13 @@ class ControlPanel(QWidget):
         self.mydoc = minidom.parse(metadatafilename)
         self.items = self.mydoc.getElementsByTagName('bts:MeasurementRecord')
         
+        metadatafilename_mrf = os.path.join(PATH_TO_FILES,'MeasurementDetail.mrf')
+        mydoc_mrf = minidom.parse(metadatafilename_mrf)
+        PATH_TO_FILES = os.path.split(metadatafilename_mrf)[0]
+        items_mrf = mydoc_mrf.getElementsByTagName('bts:MeasurementChannel')
+        
         df_cols = ["ImageName", "Column", "Row", "TimePoint", "FieldIndex", "ZSlice", "Channel", 
-                   "X_coordinates", "Y_coordinates","Z_coordinate", "ActionIndex", "Action", "Type", "Time"]
+                   "X_coordinates", "Y_coordinates","Z_coordinate", "ActionIndex", "Action", "Type", "Time", "PixPerMic"]
         rows = []
         
         for i in range(self.items.length):
@@ -173,19 +178,16 @@ class ControlPanel(QWidget):
                      "ActionIndex": self.items[i].attributes['bts:ActionIndex'].value,
                      "Action": self.items[i].attributes['bts:Action'].value, 
                      "Type": self.items[i].attributes['bts:Type'].value, 
-                     "Time": self.items[i].attributes['bts:Time'].value
+                     "Time": self.items[i].attributes['bts:Time'].value,
+                     "PixPerMic": items_mrf[0].attributes['bts:HorizontalPixelDimension'].value
                 })
             
         
         self.Meta_Data_df = pd.DataFrame(rows, columns = df_cols)
         
-        metadatafilename = os.path.join(PATH_TO_FILES,'MeasurementDetail.mrf')
-        mydoc = minidom.parse(metadatafilename)
-        PATH_TO_FILES = os.path.split(metadatafilename)[0]
-        items = mydoc.getElementsByTagName('bts:MeasurementChannel')
         
         
-        PixPerMic_Text= 'Pixel Size = '"{:.2f}".format(float(items[0].attributes['bts:HorizontalPixelDimension'].value)) + '\u03BC'+'m'
+        PixPerMic_Text= 'Pixel Size = '"{:.2f}".format(float(items_mrf[0].attributes['bts:HorizontalPixelDimension'].value)) + '\u03BC'+'m'
         self.inout_resource_gui.NumFilesLoadedLbl.setText(QtCore.QCoreApplication.translate("MainWindow", PixPerMic_Text))
         self.inout_resource_gui.NumFilesLoadedLbl.setStyleSheet("color: blue")
 

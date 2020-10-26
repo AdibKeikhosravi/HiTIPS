@@ -110,7 +110,7 @@ class ImageAnalyzer(object):
 
         return boundary, mask
     
-    def max_z_project( image_stack):
+    def max_z_project(self, image_stack):
         
         z_imglist=[]
         
@@ -194,7 +194,7 @@ class ImageAnalyzer(object):
 
         return boundary, mask
     
-    def SpotDetector(input_image, AnalysisGui, nuclei_image):
+    def SpotDetector(self, input_image, AnalysisGui, nuclei_image):
         
         uint8_max_val = 255
     
@@ -278,7 +278,7 @@ class ImageAnalyzer(object):
                         
         return spot_locations
     
-    def COORDINATES_TO_CIRCLE(coordinates,ImageForSpots):
+    def COORDINATES_TO_CIRCLE(self, coordinates,ImageForSpots):
         
         circles = np.zeros((ImageForSpots.shape), dtype=np.uint8)
         for center_y, center_x in zip(coordinates[:,0], coordinates[:,1]):
