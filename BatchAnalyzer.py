@@ -9,6 +9,7 @@ import pandas as pd
 import matplotlib.image as mpimg
 from PIL import Image, ImageQt
 from scipy.ndimage import label
+import multiprocessing
 from joblib import Parallel, delayed
 WELL_PLATE_ROWS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
 
@@ -18,10 +19,21 @@ class BatchAnalysis(object):
         
         self.AnalysisGui = analysisgui
         self.ImageAnalyzer = image_analyzer
+    
         
     def ON_APPLYBUTTON(self, Meta_Data_df, displaygui, inout_resource_gui, ImDisplay, PlateGrid):
         
-        ch1_spot_df, ch2_spot_df, ch3_spot_df, ch4_spot_df, ch5_spot_df, cell_df = pd.DataFrame(), pd.DataFrame(), pd.DataFrame(),pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+        if inout_resource_gui.NumCPUsSpinBox.value()==0:
+            jobs_number=1
+        else:
+            jobs_number=inout_resource_gui.NumCPUsSpinBox.value()
+        Parallel(n_jobs=jobs_number)(delayed(self.RUN_BATCH_ANALYZER( Meta_Data_df, displaygui, inout_resource_gui, ImDisplay, PlateGrid)))
+    
+    
+    def RUN_BATCH_ANALYZER(self, Meta_Data_df, displaygui, inout_resource_gui, ImDisplay, PlateGrid):
+        
+        ch1_spot_df, ch2_spot_df, ch3_spot_df = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
+        ch4_spot_df, ch5_spot_df, cell_df = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
         
         displaygui.setEnabled(False)
         columns = np.unique(np.asarray(Meta_Data_df['Column'], dtype=int))
@@ -371,20 +383,6 @@ class BatchAnalysis(object):
                 
                 
                 
-            
-        
-        
-    
-        
-
-
-
-
-
-
-
-
-
 
     def IMG_FOR_NUC_MASK(self, df_checker):
         
@@ -518,14 +516,6 @@ class BatchAnalysis(object):
             
             
         return xyz_coordinates, coordinates_stack
-    
-    
-    
-    
-    
-    
-    
-    
     
     
     

@@ -1,12 +1,15 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import DisplayGUI, AnalysisGUI, IO_ResourceGUI, GridLayout, DisplayGUI_Copy1, BatchAnalyzer, Analysis
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QMessageBox
 import Display, InputOutput, MetaData_Reader, Display_Copy1
 import pandas as pd
 from xml.dom import minidom
 import os
+import sys
 
 class ControlPanel(QWidget):
+    
+    EXIT_CODE_REBOOT = -1234567890
        
     #self.displaygui = QtWidgets.QGroupBox()    
     Meta_Data_df = pd.DataFrame()
@@ -128,7 +131,10 @@ class ControlPanel(QWidget):
                                                                                                      self.inout_resource_gui,
                                                                                                      self.ImDisplay,
                                                                                                      self.PlateGrid))
-
+        
+        self.analysisgui.ResetButton.clicked.connect(lambda: self.ON_RESET_BUTTON())
+        
+      #  self.analysisgui.CloseButton.clicked.connect(self.closeEvent)
         ##################
         
         self.retranslateUi(MainWindow)
@@ -202,14 +208,48 @@ class ControlPanel(QWidget):
             filename, file_extension = os.path.splitext(self.fnames[0])
             self.READ_FROM_METADATA(self.fnames[0])
         
+    def ON_RESET_BUTTON(self):
 
+        QtWidgets.qApp.exit( ControlPanel.EXIT_CODE_REBOOT )
+        
+        
+#     def closeEvent(self, event):
+        
+#         reply = QMessageBox.question(
+#             self, "Message",
+#             "Are you sure you want to quit?",
+#             QMessageBox.Close | QMessageBox.Cancel)
+
+#         if reply == QMessageBox.Close:
+            
+#             self.close()
+#             #event.accept()
+#         else:
+#             event.ignore()
+        
+    def closeEvent(self, event):
+        
+        reply = QMessageBox.question(self, 'Window Close', 'Are you sure you want to close the window?',
+                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        
+        if reply == QMessageBox.Close:
+#             self.close()
+            sys.exit(app.exec_())
+        else:
+            pass
+      
             
 if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    cp = ControlPanel()
-    cp.controlUi(MainWindow)
-    MainWindow.show()
-    sys.exit(app.exec_())
+    
+    currentExitCode = ControlPanel.EXIT_CODE_REBOOT
+    while currentExitCode == ControlPanel.EXIT_CODE_REBOOT:
+        
+        app = QtWidgets.QApplication(sys.argv)
+        MainWindow = QtWidgets.QMainWindow()
+        cp = ControlPanel()
+        cp.controlUi(MainWindow)
+        MainWindow.show()
+        currentExitCode = app.exec_()
+        app = None
+       # sys.exit(app.exec_())
 

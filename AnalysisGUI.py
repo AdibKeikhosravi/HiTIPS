@@ -32,14 +32,10 @@ class analyzer(QWidget):
         self.ResetButton.setGeometry(QtCore.QRect(730, 770, 100, 32))
         self.ResetButton.setObjectName("ResetButton")
         
-        self.CloseButton = QtWidgets.QPushButton(centralwidget)
-        self.CloseButton.setGeometry(QtCore.QRect(610, 770, 100, 32))
-        self.CloseButton.setObjectName("CloseButton")
-#         self.buttonBox = QtWidgets.QDialogButtonBox(centralwidget)
-#         self.buttonBox.setGeometry(QtCore.QRect(790, 770, 171, 32))
-#         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Apply|QtWidgets.QDialogButtonBox.Close)
-#         self.buttonBox.setObjectName("buttonBox")
-        
+#         self.CloseButton = QtWidgets.QPushButton(centralwidget)
+#         self.CloseButton.setGeometry(QtCore.QRect(610, 770, 100, 32))
+#         self.CloseButton.setObjectName("CloseButton")
+
         
         self.AnalysisMode = QtWidgets.QToolBox(centralwidget)
         self.AnalysisMode.setGeometry(QtCore.QRect(590, 50, 381, 311))
@@ -326,7 +322,7 @@ class analyzer(QWidget):
         self.AnalysisLbl.setText(_translate("MainWindow", "Analysis"))
         self.ApplyButton.setText(_translate("MainWindow", "Apply"))
         self.ResetButton.setText(_translate("MainWindow", "Reset"))
-        self.CloseButton.setText(_translate("MainWindow", "Close"))
+       # self.CloseButton.setText(_translate("MainWindow", "Close"))
         ### nuclei detection
         self.NucleiChLbl.setText(_translate("MainWindow", "Channel"))
         self.CellTypeLabel.setText(_translate("MainWindow", "Cell Type"))

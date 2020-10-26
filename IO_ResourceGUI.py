@@ -1,8 +1,11 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QWidget
+import multiprocessing as mp
+
 
 class InOut_resource(QWidget):
     Output_dir = []
+    Num_CPU_cores = 0
     def __init__(self, centralwidget):
         super().__init__(centralwidget)
         
@@ -34,6 +37,7 @@ class InOut_resource(QWidget):
         self.OutFldrButton = QtWidgets.QPushButton(self.IO)
         self.OutFldrButton.setGeometry(QtCore.QRect(405, 9, 124, 32))
         self.OutFldrButton.setObjectName("OutFldrButton")
+        
         self.OutFldrButton.clicked.connect(lambda: self.OUTPUT_FOLDER_LOADBTN())
         
         self.NumFilesLoadedLbl = QtWidgets.QLabel(self.IO)
@@ -80,6 +84,9 @@ class InOut_resource(QWidget):
         self.CPUInquiry = QtWidgets.QPushButton(self.Resources)
         self.CPUInquiry.setGeometry(QtCore.QRect(10, 10, 121, 21))
         self.CPUInquiry.setObjectName("CPUInquiry")
+        
+        self.CPUInquiry.clicked.connect(lambda: self.ON_CPU_INQUIRY_BUTTON())
+        
         self.CPUAvailLabel = QtWidgets.QLabel(self.Resources)
         self.CPUAvailLabel.setGeometry(QtCore.QRect(200, 10, 211, 20))
         font = QtGui.QFont()
@@ -125,3 +132,8 @@ class InOut_resource(QWidget):
         
         options = QtWidgets.QFileDialog.Options()
         self.Output_dir = QtWidgets.QFileDialog.getExistingDirectory(self, caption= "Select Output Directory", options=options)
+
+    def ON_CPU_INQUIRY_BUTTON(self):
+        
+        self.Num_CPU_cores = mp.cpu_count()
+        self.NumCPUAvail.display(self.Num_CPU_cores)
