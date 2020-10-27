@@ -6,6 +6,11 @@ import pandas as pd
 from xml.dom import minidom
 import os
 import sys
+if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
+    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+
+if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
+    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
 class ControlPanel(QWidget):
     
@@ -243,7 +248,6 @@ if __name__ == "__main__":
     
     currentExitCode = ControlPanel.EXIT_CODE_REBOOT
     while currentExitCode == ControlPanel.EXIT_CODE_REBOOT:
-        
         app = QtWidgets.QApplication(sys.argv)
         MainWindow = QtWidgets.QMainWindow()
         cp = ControlPanel()

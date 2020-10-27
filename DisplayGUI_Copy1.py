@@ -1,6 +1,12 @@
 #from controlpanel import Ui_MainWindow
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QWidget
+if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
+    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+
+if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
+    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
+
 IO_GUI_HEIGHT = 180
 class display(QWidget):
     
@@ -49,7 +55,7 @@ class display(QWidget):
         self.HistChLabel = QtWidgets.QLabel(self)
         self.HistChLabel.setGeometry(QtCore.QRect(10, 600 + IO_GUI_HEIGHT, 100, 31))
         font = QtGui.QFont()
-        font.setPointSize(14)
+        font.setPointSize(12)
         self.HistChLabel.setFont(font)
         self.HistChLabel.setObjectName("HistChLabel")
         self.HistChannel = QtWidgets.QComboBox(self)
