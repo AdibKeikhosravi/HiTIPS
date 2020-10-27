@@ -37,14 +37,14 @@ class BatchAnalysis(object):
         
         displaygui.setEnabled(False)
         columns = np.unique(np.asarray(Meta_Data_df['Column'], dtype=int))
-        columns = columns[:1]
+#         columns = columns[:1]
         rows = np.unique(np.asarray(Meta_Data_df['Row'], dtype=int))
-        rows = rows[:2]
+#         rows = rows[:2]
         fovs = np.unique(np.asarray(Meta_Data_df['FieldIndex'], dtype=int))
-        fovs = fovs[:3]
+#         fovs = fovs[:3]
         timepoints = np.unique(np.asarray(Meta_Data_df['TimePoint'], dtype=int))
         actionindices = np.unique(np.asarray(Meta_Data_df['ActionIndex'], dtype=int))
-        actionindices = actionindices[:1]
+#         actionindices = actionindices[:1]
 
         for col in columns:
             for row in rows:
