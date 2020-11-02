@@ -11,9 +11,10 @@ class gridgenerator(QWidget):
     
     def __init__(self, centralwidget):
         super().__init__(centralwidget)
-        
+#         self.gridLayout_centralwidget = gridLayout_centralwidget
         self.tableWidget = QtWidgets.QTableWidget(centralwidget)
         self.tableWidget.setGeometry(QtCore.QRect(10, 170, 376, 178))
+#         self.gridLayout_centralwidget.addWidget(self.tableWidget, 5, 1, 6, 7)
         self.tableWidget.setBaseSize(QtCore.QSize(10, 10))
         font = QtGui.QFont()
         font.setPointSize(6)
@@ -39,15 +40,17 @@ class gridgenerator(QWidget):
         ### fov list
         self.FOVlist = QtWidgets.QListWidget(centralwidget)
         self.FOVlist.setGeometry(QtCore.QRect(390, 190, 45, 141))
+#         self.gridLayout_centralwidget.addWidget(self.FOVlist, 6, 8, 5, 1)
         font = QtGui.QFont()
         font.setPointSize(8)
         self.FOVlist.setFont(font)
         self.FOVlist.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
-        self.FOVlist.setGridSize(QtCore.QSize(8, 15))
+        #self.FOVlist.setGridSize(QtCore.QSize(8, 15))
         self.FOVlist.setBatchSize(80)
         self.FOVlist.setObjectName("FOVlist")
         self.label = QtWidgets.QLabel(centralwidget)
         self.label.setGeometry(QtCore.QRect(390, 170, 31, 16))
+#         self.gridLayout_centralwidget.addWidget(self.label, 5, 8, 1, 1)
         font = QtGui.QFont()
         font.setPointSize(11)
         self.label.setFont(font)
@@ -56,11 +59,12 @@ class gridgenerator(QWidget):
         ### Zlist 
         self.Zlist = QtWidgets.QListWidget(centralwidget)
         self.Zlist.setGeometry(QtCore.QRect(440, 190, 45, 141))
+#         self.gridLayout_centralwidget.addWidget(self.Zlist, 6, 9, 4, 1)
         font = QtGui.QFont()
         font.setPointSize(8)
         self.Zlist.setFont(font)
         self.Zlist.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
-        self.Zlist.setGridSize(QtCore.QSize(8, 15))
+        #self.Zlist.setGridSize(QtCore.QSize(8, 15))
         self.Zlist.setBatchSize(80)
         self.Zlist.setObjectName("Zlist")
         
@@ -68,6 +72,7 @@ class gridgenerator(QWidget):
         
         self.Zlabel = QtWidgets.QLabel(centralwidget)
         self.Zlabel.setGeometry(QtCore.QRect(445, 170, 16, 20))
+#         self.gridLayout_centralwidget.addWidget(self.Zlabel, 5, 9, 1, 1)
         font = QtGui.QFont()
         font.setPointSize(11)
         self.Zlabel.setFont(font)
@@ -76,11 +81,12 @@ class gridgenerator(QWidget):
         ### Time list 
         self.Timelist = QtWidgets.QListWidget(centralwidget)
         self.Timelist.setGeometry(QtCore.QRect(490, 190, 45, 141))
+#         self.gridLayout_centralwidget.addWidget(self.Timelist, 6, 10, 4, 1)
         font = QtGui.QFont()
         font.setPointSize(8)
         self.Timelist.setFont(font)
         self.Timelist.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOn)
-        self.Timelist.setGridSize(QtCore.QSize(8, 15))
+  #      self.Timelist.setGridSize(QtCore.QSize(8, 15))
         self.Timelist.setBatchSize(80)
         self.Timelist.setObjectName("Timelist")
         
@@ -88,6 +94,7 @@ class gridgenerator(QWidget):
         
         self.Timelabel = QtWidgets.QLabel(centralwidget)
         self.Timelabel.setGeometry(QtCore.QRect(495, 170, 30, 20))
+#         self.gridLayout_centralwidget.addWidget(self.Timelabel, 5, 10, 1, 1)
         font = QtGui.QFont()
         font.setPointSize(11)
         self.Timelabel.setFont(font)
@@ -111,13 +118,13 @@ class gridgenerator(QWidget):
     def GRID_INITIALIZER(self, out_df, displaygui, inout_resource_gui, ImDisplay):
         
         ### initailize well plate grid
-        cols_in_use = np.unique(np.asarray(out_df['Column'], dtype=int))
-        rows_in_use = np.unique(np.asarray(out_df['Row'], dtype=int))
+        cols_in_use = np.unique(np.asarray(out_df['column'], dtype=int))
+        rows_in_use = np.unique(np.asarray(out_df['row'], dtype=int))
         
         for c in cols_in_use:
             for r in rows_in_use:
                 
-                df_checker = out_df.loc[(out_df['Column'] == str(c)) & (out_df['Row'] == str(r))]
+                df_checker = out_df.loc[(out_df['column'] == str(c)) & (out_df['row'] == str(r))]
                 
                 if df_checker.empty == False:
                     self.tableWidget.setItem(r-1, c-1, QtWidgets.QTableWidgetItem())
@@ -133,14 +140,14 @@ class gridgenerator(QWidget):
         for currentQTableWidgetItem in self.tableWidget.selectedItems():
             img_row = currentQTableWidgetItem.row() + 1
             img_col = currentQTableWidgetItem.column() + 1
-        df_checker = out_df.loc[(out_df['Column'] == str(img_col)) & (out_df['Row'] == str(img_row))]
+        df_checker = out_df.loc[(out_df['column'] == str(img_col)) & (out_df['row'] == str(img_row))]
         self.Timelist.clear()
         self.FOVlist.clear()
         self.Zlist.clear()
         #### initalizae FOV and Z list
         
-        df_checker = out_df.loc[(out_df['Column'] == str(img_col)) & (out_df['Row'] == str(img_row))]
-        z_values = np.unique(np.asarray(df_checker['ZSlice'], dtype=int))
+        df_checker = out_df.loc[(out_df['column'] == str(img_col)) & (out_df['row'] == str(img_row))]
+        z_values = np.unique(np.asarray(df_checker['z_slice'], dtype=int))
         for i in range(z_values.__len__()):
            
             item = QtWidgets.QListWidgetItem()
@@ -159,8 +166,8 @@ class gridgenerator(QWidget):
         self.Zlist.setSortingEnabled(__sortingEnabled)
 
         ### Initialize FOV List
-        df_checker = out_df.loc[(out_df['Column'] == str(img_col)) & (out_df['Row'] == str(img_row))]
-        fov_values = np.unique(np.asarray(df_checker['FieldIndex'], dtype=int))
+        df_checker = out_df.loc[(out_df['column'] == str(img_col)) & (out_df['row'] == str(img_row))]
+        fov_values = np.unique(np.asarray(df_checker['field_index'], dtype=int))
             
         for i in range(fov_values.__len__()):
             
@@ -179,8 +186,8 @@ class gridgenerator(QWidget):
         
         self.FOVlist.setSortingEnabled(__sortingEnabled)
         ### Initialize Time List
-        df_checker = out_df.loc[(out_df['Column'] == str(img_col)) & (out_df['Row'] == str(img_row))]
-        time_values = np.unique(np.asarray(df_checker['TimePoint'], dtype=int))
+        df_checker = out_df.loc[(out_df['column'] == str(img_col)) & (out_df['row'] == str(img_row))]
+        time_values = np.unique(np.asarray(df_checker['time_point'], dtype=int))
             
         for i in range(time_values.__len__()):
             

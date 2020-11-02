@@ -13,9 +13,10 @@ class InOut_resource(QWidget):
     Num_CPU_cores = 0
     def __init__(self, centralwidget):
         super().__init__(centralwidget)
-        
+        #self.gridLayout_centralwidget = gridLayout_centralwidget
         self.tabWidget = QtWidgets.QTabWidget(centralwidget)
         self.tabWidget.setGeometry(QtCore.QRect(10, 0, 541, 151))
+        #self.gridLayout_centralwidget.addWidget(self.tabWidget, 1, 1, 4, 10)
         self.tabWidget.setObjectName("tabWidget")
         self.IO = QtWidgets.QWidget()
         self.IO.setObjectName("IO")
@@ -55,12 +56,57 @@ class InOut_resource(QWidget):
         
         self.NumFilesLoadedLbl = QtWidgets.QLabel(self.IO)
 #         self.NumFilesLoadedLbl.setGeometry(QtCore.QRect(10, 48, 148, 18))
-        self.gridLayout_IO.addWidget(self.NumFilesLoadedLbl, 1, 0, 1, 1)
+        self.gridLayout_IO.addWidget(self.NumFilesLoadedLbl, 1, 0, 1, 2)
         font = QtGui.QFont()
         font.setPointSize(14)
         self.NumFilesLoadedLbl.setFont(font)
         self.NumFilesLoadedLbl.setObjectName("NumFilesLoadedLbl")
+
+        self.AcqObjectiveLbl = QtWidgets.QLabel(self.IO)
+#         self.NumFilesLoadedLbl.setGeometry(QtCore.QRect(10, 48, 148, 18))
+        self.gridLayout_IO.addWidget(self.AcqObjectiveLbl, 1, 1, 1, 2)
+        font = QtGui.QFont()
+        font.setPointSize(14)
+        self.AcqObjectiveLbl.setFont(font)
+        self.AcqObjectiveLbl.setObjectName("AcqObjectiveLbl")
+        
+        
+        self.ch1infoLbl = QtWidgets.QLabel(self.IO)
+#         self.NumFilesLoadedLbl.setGeometry(QtCore.QRect(10, 48, 148, 18))
+        self.gridLayout_IO.addWidget(self.ch1infoLbl, 2, 0, 1, 2)
+        font = QtGui.QFont()
+        font.setPointSize(14)
+        self.ch1infoLbl.setFont(font)
+        self.ch1infoLbl.setObjectName("ch1infoLbl")
+        
+        self.ch2infoLbl = QtWidgets.QLabel(self.IO)
+#         self.NumFilesLoadedLbl.setGeometry(QtCore.QRect(10, 48, 148, 18))
+        self.gridLayout_IO.addWidget(self.ch2infoLbl, 2, 1, 1, 2)
+        font = QtGui.QFont()
+        font.setPointSize(14)
+        self.ch2infoLbl.setFont(font)
+        self.ch2infoLbl.setObjectName("ch2infoLbl")
+        
+        self.ch3infoLbl = QtWidgets.QLabel(self.IO)
+#         self.NumFilesLoadedLbl.setGeometry(QtCore.QRect(10, 48, 148, 18))
+        self.gridLayout_IO.addWidget(self.ch3infoLbl, 2, 2, 1, 2)
+        font = QtGui.QFont()
+        font.setPointSize(14)
+        self.ch3infoLbl.setFont(font)
+        self.ch3infoLbl.setObjectName("ch3infoLbl")
+        
+        self.ch4infoLbl = QtWidgets.QLabel(self.IO)
+#         self.NumFilesLoadedLbl.setGeometry(QtCore.QRect(10, 48, 148, 18))
+        self.gridLayout_IO.addWidget(self.ch4infoLbl, 2, 3, 1, 2)
+        font = QtGui.QFont()
+        font.setPointSize(14)
+        self.ch4infoLbl.setFont(font)
+        self.ch4infoLbl.setObjectName("ch4infoLbl")
+        
+        
+        
         self.DisplayCheckBox = QtWidgets.QCheckBox(self.IO)
+        
 #         self.DisplayCheckBox.setGeometry(QtCore.QRect(410, 49, 81, 21))
         self.gridLayout_IO.addWidget(self.DisplayCheckBox, 1, 4, 1, 1)
         font = QtGui.QFont()
@@ -68,6 +114,7 @@ class InOut_resource(QWidget):
         self.DisplayCheckBox.setFont(font)
         self.DisplayCheckBox.setObjectName("DisplayCheckBox")
         self.DisplayCheckBox.setChecked(False)
+        self.DisplayCheckBox.setEnabled(False)
         self.tabWidget.addTab(self.IO, "")
         self.Resources = QtWidgets.QWidget()
         self.Resources.setObjectName("Resources")
@@ -99,6 +146,7 @@ class InOut_resource(QWidget):
 #         self.NumCPUsSpinBox.setGeometry(QtCore.QRect(410, 10, 48, 24))
         self.gridLayout_Resource.addWidget(self.NumCPUsSpinBox, 0, 3, 1, 1)
         self.NumCPUsSpinBox.setObjectName("NumCPUsSpinBox")
+        self.NumCPUsSpinBox.setMinimum(1)
         
         self.CPUInquiry.clicked.connect(lambda: self.ON_CPU_INQUIRY_BUTTON())
         

@@ -28,23 +28,30 @@ class ControlPanel(QWidget):
         MainWindow.setFont(font)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
+#         self.gridLayout_centralwidget = QtWidgets.QGridLayout(self.centralwidget)
+#         self.gridLayout_centralwidget.setObjectName("gridLayout_centralwidget")
+        
+        
         
 ######  Instantiating GUI classes
 
-        
+
+         
+        self.analysisgui = AnalysisGUI.analyzer(self.centralwidget)
+        self.analysisgui.setEnabled(False)
         self.displaygui = DisplayGUI_Copy1.display(self.centralwidget)
         #self.displaygui = DisplayGUI.display(self.centralwidget)
         self.displaygui.setEnabled(False)
-        self.inout_resource_gui = IO_ResourceGUI.InOut_resource(self.centralwidget)    
+          
         self.inputoutputcontrol = InputOutput.inputoutput_control()
+        self.inout_resource_gui = IO_ResourceGUI.InOut_resource(self.centralwidget)
         
         
-        self.analysisgui = AnalysisGUI.analyzer(self.centralwidget)
-        self.image_analyzer = Analysis.ImageAnalyzer(self.analysisgui)
+        self.image_analyzer = Analysis.ImageAnalyzer(self.analysisgui, self.inout_resource_gui)
         #self.ImDisplay = Display.imagedisplayer(self.analysisgui,self.centralwidget)
-        self.ImDisplay = Display_Copy1.imagedisplayer(self.analysisgui,self.centralwidget)
+        self.ImDisplay = Display_Copy1.imagedisplayer(self.analysisgui,self.centralwidget, self.analysisgui)
         self.PlateGrid = GridLayout.gridgenerator(self.centralwidget)
-        #self.PlateGrid.setEnabled(False)
+        self.PlateGrid.setEnabled(False)
         
         self.CV_Reader = MetaData_Reader.CellVoyager()        
     
@@ -52,7 +59,7 @@ class ControlPanel(QWidget):
         
 ######  Input Output loader controllers
 
-        self.inout_resource_gui.LoadMetadataButton.clicked.connect(lambda: self.ON_CLICK_LOADBUTTON())
+        self.inout_resource_gui.LoadMetadataButton.clicked.connect(lambda: self.ON_CLICK_LOADBUTTON(self.inout_resource_gui))
         self.inout_resource_gui.DisplayCheckBox.stateChanged.connect(lambda:
                                                                      self.ImDisplay.display_initializer(self.Meta_Data_df,
                                                                      self.displaygui, self.inout_resource_gui))
@@ -104,10 +111,10 @@ class ControlPanel(QWidget):
         self.displaygui.Ch4CheckBox.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
         
          ###### histogram controllers
-        self.displaygui.MaxHistSlider.valueChanged.connect(lambda:
+        self.displaygui.MaxHistSlider.sliderReleased.connect(lambda:
                                                            self.ImDisplay.MAX_HIST_SLIDER_UPDATE(self.displaygui))
         
-        self.displaygui.MinHistSlider.valueChanged.connect(lambda:
+        self.displaygui.MinHistSlider.sliderReleased.connect(lambda:
                                                            self.ImDisplay.MIN_HIST_SLIDER_UPDATE(self.displaygui))
         
 #         self.displaygui.MinHistSpinBox.valueChanged.connect(lambda:
@@ -119,26 +126,31 @@ class ControlPanel(QWidget):
         ####### Nuclei and spot visualization controllers
         
         self.displaygui.NuclMaskCheckBox.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
+        self.analysisgui.NucSecondThresholdSlider.sliderReleased.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
+        self.analysisgui.NucFirstThresholdSlider.sliderReleased.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
+        self.analysisgui.NucleiAreaSlider.sliderReleased.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
         
         self.displaygui.NucPreviewMethod.currentIndexChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
         
         
         self.displaygui.SpotsCheckBox.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
         
+        self.analysisgui.SpotCh1CheckBox.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
+        self.analysisgui.SpotCh2CheckBox.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
+        self.analysisgui.SpotCh3CheckBox.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
+        self.analysisgui.SpotCh4CheckBox.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
+        self.analysisgui.SpotCh5CheckBox.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
+        
         
         ####### Analysis Gui Controllers
-        self.batchanalysis = BatchAnalyzer.BatchAnalysis(self.analysisgui, self.image_analyzer)
-        self.analysisgui.NucMaxZprojectCheckBox.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
+        self.batchanalysis = BatchAnalyzer.BatchAnalysis(self.analysisgui, self.image_analyzer, self.inout_resource_gui)
+        #self.analysisgui.NucMaxZprojectCheckBox.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
         self.analysisgui.SpotMaxZProject.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
         
-        self.analysisgui.ApplyButton.clicked.connect(lambda: self.batchanalysis.ON_APPLYBUTTON(self.Meta_Data_df,
-                                                                                                     self.displaygui,
-                                                                                                     self.inout_resource_gui,
-                                                                                                     self.ImDisplay,
-                                                                                                     self.PlateGrid))
+        self.analysisgui.RunAnalysis.clicked.connect(lambda: self.batchanalysis.ON_APPLYBUTTON(self.Meta_Data_df))
         
         self.analysisgui.ResetButton.clicked.connect(lambda: self.ON_RESET_BUTTON())
-        
+        self.analysisgui.ThresholdSlider.sliderReleased.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
       #  self.analysisgui.CloseButton.clicked.connect(self.closeEvent)
         ##################
         
@@ -163,8 +175,8 @@ class ControlPanel(QWidget):
         PATH_TO_FILES = os.path.split(metadatafilename_mrf)[0]
         items_mrf = mydoc_mrf.getElementsByTagName('bts:MeasurementChannel')
         
-        df_cols = ["ImageName", "Column", "Row", "TimePoint", "FieldIndex", "ZSlice", "Channel", 
-                   "X_coordinates", "Y_coordinates","Z_coordinate", "ActionIndex", "Action", "Type", "Time", "PixPerMic"]
+        df_cols = ["ImageName", "column", "row", "time_point", "field_index", "z_slice", "channel", 
+                   "x_coordinates", "y_coordinates","z_coordinate", "action_index", "action", "Type", "Time", "PixPerMic"]
         rows = []
         
         for i in range(self.items.length):
@@ -176,17 +188,17 @@ class ControlPanel(QWidget):
                 rows.append({
 
                      "ImageName": os.path.join(PATH_TO_FILES, self.items[i].firstChild.data), 
-                     "Column": self.items[i].attributes['bts:Column'].value, 
-                     "Row": self.items[i].attributes['bts:Row'].value, 
-                     "TimePoint": self.items[i].attributes['bts:TimePoint'].value, 
-                     "FieldIndex": self.items[i].attributes['bts:FieldIndex'].value, 
-                     "ZSlice": self.items[i].attributes['bts:ZIndex'].value, 
-                     "Channel": self.items[i].attributes['bts:Ch'].value,
-                     "X_coordinates": self.items[i].attributes['bts:X'].value,
-                     "Y_coordinates": self.items[i].attributes['bts:Y'].value,
-                     "Z_coordinate": self.items[i].attributes['bts:Z'].value,
-                     "ActionIndex": self.items[i].attributes['bts:ActionIndex'].value,
-                     "Action": self.items[i].attributes['bts:Action'].value, 
+                     "column": self.items[i].attributes['bts:Column'].value, 
+                     "row": self.items[i].attributes['bts:Row'].value, 
+                     "time_point": self.items[i].attributes['bts:TimePoint'].value, 
+                     "field_index": self.items[i].attributes['bts:FieldIndex'].value, 
+                     "z_slice": self.items[i].attributes['bts:ZIndex'].value, 
+                     "channel": self.items[i].attributes['bts:Ch'].value,
+                     "x_coordinates": self.items[i].attributes['bts:X'].value,
+                     "y_coordinates": self.items[i].attributes['bts:Y'].value,
+                     "z_coordinate": self.items[i].attributes['bts:Z'].value,
+                     "action_index": self.items[i].attributes['bts:ActionIndex'].value,
+                     "action": self.items[i].attributes['bts:Action'].value, 
                      "Type": self.items[i].attributes['bts:Type'].value, 
                      "Time": self.items[i].attributes['bts:Time'].value,
                      "PixPerMic": items_mrf[0].attributes['bts:HorizontalPixelDimension'].value
@@ -200,10 +212,9 @@ class ControlPanel(QWidget):
         PixPerMic_Text= 'Pixel Size = '"{:.2f}".format(float(items_mrf[0].attributes['bts:HorizontalPixelDimension'].value)) + '\u03BC'+'m'
         self.inout_resource_gui.NumFilesLoadedLbl.setText(QtCore.QCoreApplication.translate("MainWindow", PixPerMic_Text))
         self.inout_resource_gui.NumFilesLoadedLbl.setStyleSheet("color: blue")
-
-
         
-    def ON_CLICK_LOADBUTTON(self):
+
+    def ON_CLICK_LOADBUTTON(self, inout_resource_gui):
         
         options = QtWidgets.QFileDialog.Options()
         self.fnames, _ = QtWidgets.QFileDialog.getOpenFileNames(self, 'Select Image Files...',
@@ -212,36 +223,16 @@ class ControlPanel(QWidget):
         if self.fnames:
             filename, file_extension = os.path.splitext(self.fnames[0])
             self.READ_FROM_METADATA(self.fnames[0])
+            self.inout_resource_gui.DisplayCheckBox.setEnabled(True)
+            self.analysisgui.setEnabled(True)
         
     def ON_RESET_BUTTON(self):
 
         QtWidgets.qApp.exit( ControlPanel.EXIT_CODE_REBOOT )
         
         
-#     def closeEvent(self, event):
-        
-#         reply = QMessageBox.question(
-#             self, "Message",
-#             "Are you sure you want to quit?",
-#             QMessageBox.Close | QMessageBox.Cancel)
+      
 
-#         if reply == QMessageBox.Close:
-            
-#             self.close()
-#             #event.accept()
-#         else:
-#             event.ignore()
-        
-    def closeEvent(self, event):
-        
-        reply = QMessageBox.question(self, 'Window Close', 'Are you sure you want to close the window?',
-                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        
-        if reply == QMessageBox.Close:
-#             self.close()
-            sys.exit(app.exec_())
-        else:
-            pass
       
             
 if __name__ == "__main__":
