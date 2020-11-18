@@ -15,7 +15,7 @@ class InOut_resource(QWidget):
         super().__init__(centralwidget)
         #self.gridLayout_centralwidget = gridLayout_centralwidget
         self.tabWidget = QtWidgets.QTabWidget(centralwidget)
-        self.tabWidget.setGeometry(QtCore.QRect(10, 0, 541, 151))
+        self.tabWidget.setGeometry(QtCore.QRect(10, 50, 541, 170))
         #self.gridLayout_centralwidget.addWidget(self.tabWidget, 1, 1, 4, 10)
         self.tabWidget.setObjectName("tabWidget")
         self.IO = QtWidgets.QWidget()

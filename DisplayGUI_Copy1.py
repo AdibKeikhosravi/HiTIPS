@@ -7,7 +7,7 @@ if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
 if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
-IO_GUI_HEIGHT = 180
+IO_GUI_HEIGHT = 260
 class display(QWidget):
     
     def __init__(self, centralwidget):

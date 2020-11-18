@@ -1,5 +1,9 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QWidget
+import pandas as pd
+import numpy as np
+from distutils import util
+
 if hasattr(QtCore.Qt, 'AA_EnableHighDpiScaling'):
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 
@@ -13,7 +17,7 @@ class analyzer(QWidget):
 #         self.gridLayout_centralwidget = gridLayout_centralwidget
         
         self.AnalysisLbl = QtWidgets.QLabel(centralwidget)
-        self.AnalysisLbl.setGeometry(QtCore.QRect(730, 10, 98, 30))
+        self.AnalysisLbl.setGeometry(QtCore.QRect(730, 50, 120, 30))
 #         self.gridLayout_centralwidget.addWidget(self.AnalysisLbl, 1, 17, 1, 3)
         font = QtGui.QFont()
         font.setFamily(".Farah PUA")
@@ -33,12 +37,12 @@ class analyzer(QWidget):
 #         self.progressBar.setObjectName("progressBar")
         
         self.RunAnalysis = QtWidgets.QPushButton(centralwidget)
-        self.RunAnalysis.setGeometry(QtCore.QRect(850, 770, 100, 32))
+        self.RunAnalysis.setGeometry(QtCore.QRect(850, 850, 100, 32))
 #         self.gridLayout_centralwidget.addWidget(self.RunAnalysis, 23, 18, 1, 2)
         self.RunAnalysis.setObjectName("RunAnalysis")
         
         self.ResetButton = QtWidgets.QPushButton(centralwidget)
-        self.ResetButton.setGeometry(QtCore.QRect(730, 770, 100, 32))
+        self.ResetButton.setGeometry(QtCore.QRect(730, 850, 100, 32))
 #         self.gridLayout_centralwidget.addWidget(self.ResetButton, 23, 21, 1, 2)
         self.ResetButton.setObjectName("ResetButton")
         
@@ -48,7 +52,7 @@ class analyzer(QWidget):
 
         
         self.AnalysisMode = QtWidgets.QToolBox(centralwidget)
-        self.AnalysisMode.setGeometry(QtCore.QRect(590, 50, 381, 370))
+        self.AnalysisMode.setGeometry(QtCore.QRect(590, 90, 381, 370))
 #         self.gridLayout_centralwidget.addWidget(self.AnalysisMode, 3, 15, 10, 15)
         self.gridLayout_AnalysisMode = QtWidgets.QGridLayout(self.AnalysisMode)
         self.gridLayout_AnalysisMode.setObjectName("gridLayout_AnalysisMode")
@@ -542,3 +546,77 @@ class analyzer(QWidget):
     def SPOT_THRESH_LABEL_UPDATE(self):
         
         self.SpotThreshSliderValue.setText(QtCore.QCoreApplication.translate("MainWindow", str(self.ThresholdSlider.value())))
+    
+    
+    def SAVE_CONFIGURATION(self, csv_filename):
+        
+        config_data = {
+            
+            "nuclei_channel": self.NucleiChannel.currentText(),
+            "nuclei_detection_method": self.NucDetectMethod.currentText(),
+            "nuclei_z_project":  self.NucMaxZprojectCheckBox.isChecked(),
+            "nuclei_detection": self.NucSecondThresholdSlider.value(),
+            "nuclei_separation": self.NucFirstThresholdSlider.value(),
+            "nuclei_area": self.NucleiAreaSlider.value(),
+            "ch1_spot": self.SpotCh1CheckBox.isChecked(),
+            "ch2_spot": self.SpotCh2CheckBox.isChecked(),
+            "ch3_spot": self.SpotCh3CheckBox.isChecked(),
+            "ch4_spot": self.SpotCh4CheckBox.isChecked(),
+            "ch5_spot": self.SpotCh5CheckBox.isChecked(),
+            "ch1_spots/ch": self.SpotPerCh1SpinBox.value(),
+            "ch2_spots/ch": self.SpotPerCh2SpinBox.value(),
+            "ch3_spots/ch": self.SpotPerCh3SpinBox.value(),
+            "ch4_spots/ch": self.SpotPerCh4SpinBox.value(),
+            "ch5_spots/ch": self.SpotPerCh5SpinBox.value(),
+            "spot_coordinates": self.SpotLocationCbox.currentText(),
+            "spot_z_project": self.SpotMaxZProject.isChecked(),
+            "spot_detection_method": self.spotanalysismethod.currentText(),
+            "spot_threshold_method": self.thresholdmethod.currentText(),
+            "spot_threshold_value": self.ThresholdSlider.value()
+            
+        }
+        
+        config_df = pd.DataFrame.from_dict(config_data, orient='index')
+        
+        config_df.to_csv(csv_filename)
+    
+    def file_save(self):
+        self.fnames, _  = QtWidgets.QFileDialog.getSaveFileName(self, 'Save File')
+        self.csv_filename = self.fnames + r'.csv'
+        self.SAVE_CONFIGURATION(self.csv_filename)
+        
+    def LOAD_CONFIGURATION(self):
+        
+         
+        
+        options = QtWidgets.QFileDialog.Options()
+        self.fnames, _ = QtWidgets.QFileDialog.getOpenFileNames(self, 'Select Configuration File...',
+                                                                '', "Configuration files (*.csv)"
+                                                                , options=options)
+        print(self.fnames[0])
+        conf = pd.read_csv(self.fnames[0])
+        
+        self.NucleiChannel.setCurrentText(conf[conf['Unnamed: 0']== 'nuclei_channel']['0'].iloc[0])
+        self.NucDetectMethod.setCurrentText(conf[conf['Unnamed: 0']== 'nuclei_detection_method']['0'].iloc[0])
+        self.NucMaxZprojectCheckBox.setChecked(bool(util.strtobool(conf[conf['Unnamed: 0']== 'nuclei_z_project']['0'].iloc[0])))
+        self.NucSecondThresholdSlider.setValue(np.array(conf[conf['Unnamed: 0']== 'nuclei_detection']['0'].iloc[0]).astype(int))
+        self.NucFirstThresholdSlider.setValue(np.array(conf[conf['Unnamed: 0']== 'nuclei_separation']['0'].iloc[0]).astype(int))
+        self.NucleiAreaSlider.setValue(np.array(conf[conf['Unnamed: 0']== 'nuclei_area']['0'].iloc[0]).astype(int))
+        self.SpotCh1CheckBox.setChecked(bool(util.strtobool(conf[conf['Unnamed: 0']== 'ch1_spot']['0'].iloc[0])))
+        self.SpotCh2CheckBox.setChecked(bool(util.strtobool(conf[conf['Unnamed: 0']== 'ch2_spot']['0'].iloc[0])))
+        self.SpotCh3CheckBox.setChecked(bool(util.strtobool(conf[conf['Unnamed: 0']== 'ch3_spot']['0'].iloc[0])))
+        self.SpotCh4CheckBox.setChecked(bool(util.strtobool(conf[conf['Unnamed: 0']== 'ch4_spot']['0'].iloc[0])))
+        self.SpotCh5CheckBox.setChecked(bool(util.strtobool(conf[conf['Unnamed: 0']== 'ch5_spot']['0'].iloc[0])))
+        self.SpotPerCh1SpinBox.setValue(np.array(conf[conf['Unnamed: 0']== 'ch1_spots/ch']['0'].iloc[0]).astype(int))
+        self.SpotPerCh2SpinBox.setValue(np.array(conf[conf['Unnamed: 0']== 'ch2_spots/ch']['0'].iloc[0]).astype(int))
+        self.SpotPerCh3SpinBox.setValue(np.array(conf[conf['Unnamed: 0']== 'ch3_spots/ch']['0'].iloc[0]).astype(int))
+        self.SpotPerCh4SpinBox.setValue(np.array(conf[conf['Unnamed: 0']== 'ch4_spots/ch']['0'].iloc[0]).astype(int))
+        self.SpotPerCh5SpinBox.setValue(np.array(conf[conf['Unnamed: 0']== 'ch5_spots/ch']['0'].iloc[0]).astype(int))
+        self.SpotLocationCbox.setCurrentText(conf[conf['Unnamed: 0']== 'spot_coordinates']['0'].iloc[0])
+        self.SpotMaxZProject.setChecked(bool(util.strtobool(conf[conf['Unnamed: 0']== 'spot_z_project']['0'].iloc[0])))
+        self.spotanalysismethod.setCurrentText(conf[conf['Unnamed: 0']== 'spot_detection_method']['0'].iloc[0])
+        self.thresholdmethod.setCurrentText(conf[conf['Unnamed: 0']== 'spot_threshold_method']['0'].iloc[0])
+        self.ThresholdSlider.setValue(np.array(conf[conf['Unnamed: 0']== 'spot_threshold_value']['0'].iloc[0]).astype(int))
+
+        
+        (bool(util.strtobool(conf[conf['Unnamed: 0']== 'spot_z_project']['0'].iloc[0])))

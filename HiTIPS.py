@@ -22,7 +22,7 @@ class ControlPanel(QWidget):
     def controlUi(self, MainWindow):
         
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(976, 822)
+        MainWindow.resize(1000, 930)
         font = QtGui.QFont()
         font.setItalic(True)
         MainWindow.setFont(font)
@@ -32,11 +32,9 @@ class ControlPanel(QWidget):
 #         self.gridLayout_centralwidget.setObjectName("gridLayout_centralwidget")
         
         
-        
 ######  Instantiating GUI classes
 
 
-         
         self.analysisgui = AnalysisGUI.analyzer(self.centralwidget)
         self.analysisgui.setEnabled(False)
         self.displaygui = DisplayGUI_Copy1.display(self.centralwidget)
@@ -154,6 +152,44 @@ class ControlPanel(QWidget):
       #  self.analysisgui.CloseButton.clicked.connect(self.closeEvent)
         ##################
         
+        ####### Menu Bar 
+        
+        self.menubar = QtWidgets.QMenuBar(MainWindow)
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1000, 30))
+        self.menubar.setObjectName("menubar")
+        self.menuFile = QtWidgets.QMenu(self.menubar)
+        self.menuFile.setObjectName("menuFile")
+        self.menuTool = QtWidgets.QMenu(self.menubar)
+        self.menuTool.setObjectName("menuTool")
+        MainWindow.setMenuBar(self.menubar)
+        self.statusbar = QtWidgets.QStatusBar(MainWindow)
+        self.statusbar.setObjectName("statusbar")
+        MainWindow.setStatusBar(self.statusbar)
+        self.actionLoad = QtWidgets.QMenu(self.menuFile)
+        self.actionLoad.setObjectName("actionLoad")
+        self.actionLoad_image = QtWidgets.QAction(self.actionLoad)
+        self.actionLoad_image.setObjectName("actionLoad_image")
+        self.LoadConfig = QtWidgets.QAction(MainWindow)
+        self.LoadConfig.setObjectName("LoadConfig")
+        self.saveConfig = QtWidgets.QAction(MainWindow)
+        self.saveConfig.setObjectName("saveConfig")
+        self.actionexit = QtWidgets.QAction(MainWindow)
+        self.actionexit.setObjectName("actionexit")
+        self.menuFile.addMenu(self.actionLoad)
+        self.actionLoad.addAction(self.actionLoad_image)
+        self.menuFile.addAction(self.actionexit)
+        self.menuTool.addAction(self.LoadConfig)
+        self.menuTool.addAction(self.saveConfig)
+        self.menubar.addAction(self.menuFile.menuAction())
+        self.menubar.addAction(self.menuTool.menuAction())
+        
+        self.saveConfig.triggered.connect(self.analysisgui.file_save)
+        self.LoadConfig.triggered.connect(self.analysisgui.LOAD_CONFIGURATION)
+        
+        
+        
+        
+        
         self.retranslateUi(MainWindow)
         self.analysisgui.AnalysisMode.setCurrentIndex(4)
         self.inout_resource_gui.tabWidget.setCurrentIndex(0)
@@ -163,6 +199,13 @@ class ControlPanel(QWidget):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "HiTIPS"))
+        self.menuFile.setTitle(_translate("MainWindow", "File"))
+        self.menuTool.setTitle(_translate("MainWindow", "Tool"))
+        self.actionLoad.setTitle(_translate("MainWindow", "Load"))
+        self.actionLoad_image.setText(_translate("MainWindow", "Image"))
+        self.LoadConfig.setText(_translate("MainWindow", "Load Configuration"))
+        self.saveConfig.setText(_translate("MainWindow", "Save Configuration"))
+        self.actionexit.setText(_translate("MainWindow", "exit"))
         
     def READ_FROM_METADATA(self, metadatafilename):
     

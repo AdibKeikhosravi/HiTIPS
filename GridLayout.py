@@ -13,7 +13,7 @@ class gridgenerator(QWidget):
         super().__init__(centralwidget)
 #         self.gridLayout_centralwidget = gridLayout_centralwidget
         self.tableWidget = QtWidgets.QTableWidget(centralwidget)
-        self.tableWidget.setGeometry(QtCore.QRect(10, 170, 376, 178))
+        self.tableWidget.setGeometry(QtCore.QRect(10, 250, 376, 178))
 #         self.gridLayout_centralwidget.addWidget(self.tableWidget, 5, 1, 6, 7)
         self.tableWidget.setBaseSize(QtCore.QSize(10, 10))
         font = QtGui.QFont()
@@ -39,7 +39,7 @@ class gridgenerator(QWidget):
         self.tableWidget.verticalHeader().setDefaultSectionSize(10)
         ### fov list
         self.FOVlist = QtWidgets.QListWidget(centralwidget)
-        self.FOVlist.setGeometry(QtCore.QRect(390, 190, 45, 141))
+        self.FOVlist.setGeometry(QtCore.QRect(390, 270, 45, 141))
 #         self.gridLayout_centralwidget.addWidget(self.FOVlist, 6, 8, 5, 1)
         font = QtGui.QFont()
         font.setPointSize(8)
@@ -49,7 +49,7 @@ class gridgenerator(QWidget):
         self.FOVlist.setBatchSize(80)
         self.FOVlist.setObjectName("FOVlist")
         self.label = QtWidgets.QLabel(centralwidget)
-        self.label.setGeometry(QtCore.QRect(390, 170, 31, 16))
+        self.label.setGeometry(QtCore.QRect(390, 250, 31, 16))
 #         self.gridLayout_centralwidget.addWidget(self.label, 5, 8, 1, 1)
         font = QtGui.QFont()
         font.setPointSize(11)
@@ -58,7 +58,7 @@ class gridgenerator(QWidget):
 
         ### Zlist 
         self.Zlist = QtWidgets.QListWidget(centralwidget)
-        self.Zlist.setGeometry(QtCore.QRect(440, 190, 45, 141))
+        self.Zlist.setGeometry(QtCore.QRect(440, 270, 45, 141))
 #         self.gridLayout_centralwidget.addWidget(self.Zlist, 6, 9, 4, 1)
         font = QtGui.QFont()
         font.setPointSize(8)
@@ -71,7 +71,7 @@ class gridgenerator(QWidget):
         
         
         self.Zlabel = QtWidgets.QLabel(centralwidget)
-        self.Zlabel.setGeometry(QtCore.QRect(445, 170, 16, 20))
+        self.Zlabel.setGeometry(QtCore.QRect(445, 250, 16, 20))
 #         self.gridLayout_centralwidget.addWidget(self.Zlabel, 5, 9, 1, 1)
         font = QtGui.QFont()
         font.setPointSize(11)
@@ -80,7 +80,7 @@ class gridgenerator(QWidget):
         
         ### Time list 
         self.Timelist = QtWidgets.QListWidget(centralwidget)
-        self.Timelist.setGeometry(QtCore.QRect(490, 190, 45, 141))
+        self.Timelist.setGeometry(QtCore.QRect(490, 270, 45, 141))
 #         self.gridLayout_centralwidget.addWidget(self.Timelist, 6, 10, 4, 1)
         font = QtGui.QFont()
         font.setPointSize(8)
@@ -93,7 +93,7 @@ class gridgenerator(QWidget):
         
         
         self.Timelabel = QtWidgets.QLabel(centralwidget)
-        self.Timelabel.setGeometry(QtCore.QRect(495, 170, 30, 20))
+        self.Timelabel.setGeometry(QtCore.QRect(495, 250, 30, 20))
 #         self.gridLayout_centralwidget.addWidget(self.Timelabel, 5, 10, 1, 1)
         font = QtGui.QFont()
         font.setPointSize(11)

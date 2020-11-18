@@ -36,14 +36,17 @@ class BatchAnalysis(object):
         self.output_prefix  = path_list[path_list.__len__()-1]
         self.output_folder = os.path.join(self.inout_resource_gui.Output_dir,self.experiment_name)
         if os.path.isdir(self.output_folder) == False:
-            os.mkdir(self.output_folder)            
+            os.mkdir(self.output_folder) 
             
+        csv_config_folder = os.path.join(self.output_folder, 'configuration_files')
+        if os.path.isdir(csv_config_folder) == False:
+            os.mkdir(csv_config_folder) 
+        self.config_file = os.path.join(csv_config_folder, 'analysis_configuration.csv')
+        self.AnalysisGui.SAVE_CONFIGURATION(self.config_file)
+        
         columns = np.unique(np.asarray(self.Meta_Data_df['column'], dtype=int))
-        columns = columns [:1]
         rows = np.unique(np.asarray(self.Meta_Data_df['row'], dtype=int))
-        rows = rows[:1]
         fovs = np.unique(np.asarray(self.Meta_Data_df['field_index'], dtype=int))
-        fovs = fovs[:2]
         time_points = np.unique(np.asarray(self.Meta_Data_df['time_point'], dtype=int))
         actionindices = np.unique(np.asarray(self.Meta_Data_df['action_index'], dtype=int))
         
@@ -499,9 +502,9 @@ class BatchAnalysis(object):
                 s1 = key1 + '_spot_index(1)'
                 s2 = key2 + '_spot_index(2)'
                 data = { str(s1): [ind1], str(s2): [ind2], 
-                        'XY-Disance(pixels)': [dist_2d], 'XYZ-Distnce(pixels)': [dist_3d],
-                        'XY-Disance(micron)': [dist_2d*np.asarray(self.df_checker["PixPerMic"].iloc[0]).astype(float)], 
-                        'XYZ-Distnce(micron)':[dist_3d*np.asarray(self.df_checker["PixPerMic"].iloc[0]).astype(float)]}
+                        'XY-Distance(pixels)': [dist_2d], 'XYZ-Distance(pixels)': [dist_3d],
+                        'XY-Distance(micron)': [dist_2d*np.asarray(self.df_checker["PixPerMic"].iloc[0]).astype(float)], 
+                        'XYZ-Distance(micron)':[dist_3d*np.asarray(self.df_checker["PixPerMic"].iloc[0]).astype(float)]}
                 temp_df = pd.DataFrame(data)
                 dist_pd = pd.concat([dist_pd, temp_df], ignore_index=True)
 
