@@ -11,12 +11,14 @@ if hasattr(QtCore.Qt, 'AA_UseHighDpiPixmaps'):
 class InOut_resource(QWidget):
     Output_dir = []
     Num_CPU_cores = 0
-    def __init__(self, centralwidget):
+    Num_GPU_inuse = 0
+    def __init__(self, centralwidget, gridLayout_centralwidget):
         super().__init__(centralwidget)
-        #self.gridLayout_centralwidget = gridLayout_centralwidget
+        
+        self.gridLayout_centralwidget = gridLayout_centralwidget
         self.tabWidget = QtWidgets.QTabWidget(centralwidget)
-        self.tabWidget.setGeometry(QtCore.QRect(10, 50, 541, 170))
-        #self.gridLayout_centralwidget.addWidget(self.tabWidget, 1, 1, 4, 10)
+#         self.tabWidget.setGeometry(QtCore.QRect(10, 50, 541, 170))
+        self.gridLayout_centralwidget.addWidget(self.tabWidget, 1, 1, 4, 10)
         self.tabWidget.setObjectName("tabWidget")
         self.IO = QtWidgets.QWidget()
         self.IO.setObjectName("IO")
@@ -185,6 +187,10 @@ class InOut_resource(QWidget):
 #         self.NumGPUsSpinBox.setGeometry(QtCore.QRect(370, 50, 48, 24))
         self.gridLayout_Resource.addWidget(self.NumGPUsSpinBox, 1, 3, 1, 1)
         self.NumGPUsSpinBox.setObjectName("NumGPUsSpinBox")
+        self.NumGPUsSpinBox.setMinimum(0)
+        self.NumGPUsSpinBox.valueChanged.connect(lambda: self.ON_GPU_num_change())
+        
+        
         self.GPUsInUseLabel = QtWidgets.QLabel(self.Resources)
 #         self.GPUsInUseLabel.setGeometry(QtCore.QRect(420, 50, 51, 21))
         self.gridLayout_Resource.addWidget(self.GPUsInUseLabel, 1, 4, 1, 1)
@@ -223,3 +229,7 @@ class InOut_resource(QWidget):
         
         self.Num_CPU_cores = mp.cpu_count()
         self.NumCPUAvail.display(self.Num_CPU_cores)
+        
+    def ON_GPU_num_change(self):
+        
+        self.Num_GPU_inuse = self.NumGPUsSpinBox.value()

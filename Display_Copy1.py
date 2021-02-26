@@ -39,6 +39,23 @@ class imagedisplayer(object):
     def display_initializer(self, out_df, displaygui, IO_GUI):
             
             displaygui.setEnabled(True)
+            unique_ch = np.unique(np.asarray(out_df['channel'], dtype=int))
+            if 1 not in unique_ch:
+                displaygui.Ch1CheckBox.setEnabled(False)
+                displaygui.Ch1maxproject.setEnabled(False)
+            if 2 not in unique_ch:
+                displaygui.Ch2CheckBox.setEnabled(False)
+                displaygui.Ch2maxproject.setEnabled(False)
+            if 3 not in unique_ch:
+                displaygui.Ch3CheckBox.setEnabled(False)
+                displaygui.Ch3maxproject.setEnabled(False)
+            if 4 not in unique_ch:
+                displaygui.Ch4CheckBox.setEnabled(False)
+                displaygui.Ch4maxproject.setEnabled(False)
+            if 5 not in unique_ch:
+                displaygui.Ch5CheckBox.setEnabled(False)
+                displaygui.Ch5maxproject.setEnabled(False)
+                
             self.METADATA_DATAFRAME = out_df
             
             displaybtn = IO_GUI.DisplayCheckBox
@@ -116,45 +133,115 @@ class imagedisplayer(object):
                 del ch4_img
             if 'All_Channels' in locals():
                 del All_Channels
-            
                 
-            if displaygui.Ch1CheckBox.isChecked() == True:
-                #print(self.imgchannels.loc[self.imgchannels['Channel']=='1']['ImageName'].iloc[0])
-                ch1_img = mpimg.imread(self.imgchannels.loc[self.imgchannels['channel']=='1']['ImageName'].iloc[0])
-                ch1_img = (ch1_img/256).astype('uint8')
-                self.CH1_img = ch1_img
-                self.height, self.width = np.shape(ch1_img)
+            if self.imgchannels.empty == False:
                 
-            if displaygui.Ch2CheckBox.isChecked() == True:
+                if displaygui.Ch1CheckBox.isChecked() == True:
+                    ch1_name = self.imgchannels.loc[self.imgchannels['channel']=='1']['ImageName'].iloc[0]
+                    if ch1_name:
+                        if displaygui.Ch1maxproject.isChecked() == True:
+                            self.ch1_zstack = self.METADATA_DATAFRAME.loc[
+                                                    (self.METADATA_DATAFRAME['column'] == str(self.grid_data[0])) & 
+                                                    (self.METADATA_DATAFRAME['row'] == str(self.grid_data[1])) & 
+                                                    (self.METADATA_DATAFRAME['time_point'] == str(self.grid_data[2])) & 
+                                                    (self.METADATA_DATAFRAME['field_index'] == str(self.grid_data[3])) &  
+                                                    (self.METADATA_DATAFRAME['channel'] == '1')
+                                                    ]
+                            ch1_img = self.ImageAnalyzer.max_z_project(self.ch1_zstack)
+                        else:
+                            
+                            ch1_img = mpimg.imread(ch1_name)
+                        ch1_img = (ch1_img/(ch1_img.max()/250)).astype('uint8')
+                        self.CH1_img = ch1_img
+                        self.height, self.width = np.shape(ch1_img)
 
-                ch2_img = mpimg.imread(self.imgchannels.loc[self.imgchannels['channel']=='2']['ImageName'].iloc[0])
-                ch2_img = (ch2_img/256).astype('uint8')
-                self.height, self.width = np.shape(ch2_img)
+                if displaygui.Ch2CheckBox.isChecked() == True:
 
-            if displaygui.Ch3CheckBox.isChecked() == True:
+                    ch2_name =self.imgchannels.loc[self.imgchannels['channel']=='2']['ImageName'].iloc[0]
+                    if ch2_name:
+                        if displaygui.Ch2maxproject.isChecked() == True:
+                            self.ch2_zstack = self.METADATA_DATAFRAME.loc[
+                                                    (self.METADATA_DATAFRAME['column'] == str(self.grid_data[0])) & 
+                                                    (self.METADATA_DATAFRAME['row'] == str(self.grid_data[1])) & 
+                                                    (self.METADATA_DATAFRAME['time_point'] == str(self.grid_data[2])) & 
+                                                    (self.METADATA_DATAFRAME['field_index'] == str(self.grid_data[3])) &  
+                                                    (self.METADATA_DATAFRAME['channel'] == '2')
+                                                    ]
+                            ch2_img = self.ImageAnalyzer.max_z_project(self.ch2_zstack)
+                        else:
+                            
+                            ch2_img = mpimg.imread(ch2_name)
+                        ch2_img = (ch2_img/(ch2_img.max()/250)).astype('uint8')
+                        self.height, self.width = np.shape(ch2_img)
 
-                ch3_img = mpimg.imread(self.imgchannels.loc[self.imgchannels['channel']=='3']['ImageName'].iloc[0])
-                ch3_img = (ch3_img/256).astype('uint8')
-                self.height, self.width = np.shape(ch3_img)
-                
-            if displaygui.Ch4CheckBox.isChecked() == True:
+                if displaygui.Ch3CheckBox.isChecked() == True:
 
-                ch4_img = mpimg.imread(self.imgchannels.loc[self.imgchannels['channel']=='4']['ImageName'].iloc[0])
-                ch4_img = (ch4_img/256).astype('uint8')
-                self.height, self.width = np.shape(ch4_img)
-            
-            if self.height or self.width:
-                
-                self.RGB_channels = np.zeros((self.height, self.width, 3))
-                if 'ch2_img' in locals():
-                    self.RGB_channels[:,:,0] = ch2_img
-                if 'ch3_img' in locals():
-                    self.RGB_channels[:,:,1] = ch3_img
-                if 'ch4_img' in locals():
-                    self.RGB_channels[:,:,2] = ch4_img
-                
-                self.ADJUST_IMAGE_CONTRAST(displaygui, self.CH1_img, self.RGB_channels )
-               
+                    ch3_name = self.imgchannels.loc[self.imgchannels['channel']=='3']['ImageName'].iloc[0]
+                    if ch3_name:
+                        if displaygui.Ch3maxproject.isChecked() == True:
+                            self.ch3_zstack = self.METADATA_DATAFRAME.loc[
+                                                    (self.METADATA_DATAFRAME['column'] == str(self.grid_data[0])) & 
+                                                    (self.METADATA_DATAFRAME['row'] == str(self.grid_data[1])) & 
+                                                    (self.METADATA_DATAFRAME['time_point'] == str(self.grid_data[2])) & 
+                                                    (self.METADATA_DATAFRAME['field_index'] == str(self.grid_data[3])) &  
+                                                    (self.METADATA_DATAFRAME['channel'] == '3')
+                                                    ]
+                            ch3_img = self.ImageAnalyzer.max_z_project(self.ch3_zstack)
+                        else:
+                            
+                            ch3_img = mpimg.imread(ch3_name)
+                        ch3_img = (ch3_img/(ch3_img.max()/250)).astype('uint8')
+                        self.height, self.width = np.shape(ch3_img)
+
+                if displaygui.Ch4CheckBox.isChecked() == True:
+                    ch4_name = self.imgchannels.loc[self.imgchannels['channel']=='4']['ImageName'].iloc[0]
+                    if ch4_name:
+                        if displaygui.Ch4maxproject.isChecked() == True:
+                            self.ch4_zstack = self.METADATA_DATAFRAME.loc[
+                                                    (self.METADATA_DATAFRAME['column'] == str(self.grid_data[0])) & 
+                                                    (self.METADATA_DATAFRAME['row'] == str(self.grid_data[1])) & 
+                                                    (self.METADATA_DATAFRAME['time_point'] == str(self.grid_data[2])) & 
+                                                    (self.METADATA_DATAFRAME['field_index'] == str(self.grid_data[3])) &  
+                                                    (self.METADATA_DATAFRAME['channel'] == '4')
+                                                    ]
+                            ch4_img = self.ImageAnalyzer.max_z_project(self.ch4_zstack)
+                        else:
+                            
+                            ch4_img = mpimg.imread(ch4_name)
+                        ch4_img = (ch4_img/(ch4_img.max()/250)).astype('uint8')
+                        self.height, self.width = np.shape(ch4_img)
+
+                if displaygui.Ch5CheckBox.isChecked() == True:
+
+                    ch5_name = self.imgchannels.loc[self.imgchannels['channel']=='5']['ImageName'].iloc[0]
+                    if ch5_name:
+                        if displaygui.Ch5maxproject.isChecked() == True:
+                            self.ch5_zstack = self.METADATA_DATAFRAME.loc[
+                                                    (self.METADATA_DATAFRAME['column'] == str(self.grid_data[0])) & 
+                                                    (self.METADATA_DATAFRAME['row'] == str(self.grid_data[1])) & 
+                                                    (self.METADATA_DATAFRAME['time_point'] == str(self.grid_data[2])) & 
+                                                    (self.METADATA_DATAFRAME['field_index'] == str(self.grid_data[3])) &  
+                                                    (self.METADATA_DATAFRAME['channel'] == '5')
+                                                    ]
+                            ch5_img = self.ImageAnalyzer.max_z_project(self.ch5_zstack)
+                        else:
+                            
+                            ch5_img = mpimg.imread(ch5_name)
+                        ch5_img = (ch5_img/(ch5_img.max()/250)).astype('uint8')
+                        self.height, self.width = np.shape(ch5_img)
+
+                if self.height or self.width:
+
+                    self.RGB_channels = np.zeros((self.height, self.width, 3))
+                    if 'ch2_img' in locals():
+                        self.RGB_channels[:,:,1] = ch2_img
+                    if 'ch3_img' in locals():
+                        self.RGB_channels[:,:,0] = ch3_img
+                    if 'ch4_img' in locals():
+                        self.RGB_channels[:,:,2] = ch4_img
+
+                    self.ADJUST_IMAGE_CONTRAST(displaygui, self.CH1_img, self.RGB_channels )
+
             
     def ADJUST_IMAGE_CONTRAST(self, displaygui, CH1 , RGB_CHANNELS):
             
@@ -186,8 +273,8 @@ class imagedisplayer(object):
                     self.ch4_hist_min = self.lower
                     
                 CH1 = self.ON_ADJUST_INTENSITY(CH1, self.ch1_hist_min, self.ch1_hist_max)
-                RGB_Channels[:,:,0] = self.ON_ADJUST_INTENSITY(RGB_Channels[:,:,0], self.ch2_hist_min, self.ch2_hist_max)
-                RGB_Channels[:,:,1] = self.ON_ADJUST_INTENSITY(RGB_Channels[:,:,1], self.ch3_hist_min, self.ch3_hist_max)
+                RGB_Channels[:,:,1] = self.ON_ADJUST_INTENSITY(RGB_Channels[:,:,1], self.ch2_hist_min, self.ch2_hist_max)
+                RGB_Channels[:,:,0] = self.ON_ADJUST_INTENSITY(RGB_Channels[:,:,0], self.ch3_hist_min, self.ch3_hist_max)
                 RGB_Channels[:,:,2] = self.ON_ADJUST_INTENSITY(RGB_Channels[:,:,2], self.ch4_hist_min, self.ch4_hist_max)
             self.MERGEIAMGES(displaygui, CH1, RGB_Channels)
             
@@ -222,7 +309,7 @@ class imagedisplayer(object):
             if displaygui.SpotsCheckBox.isChecked() == True:
                 
                 self.input_image = self.IMAGE_TO_BE_MASKED()
-                ch1_spots_img, ch2_spots_img, ch3_spots_img, ch4_spots_img = self.IMAGE_FOR_SPOT_DETECTION(self.input_image)
+                ch1_spots_img, ch2_spots_img, ch3_spots_img, ch4_spots_img, ch5_spots_img = self.IMAGE_FOR_SPOT_DETECTION(self.input_image, displaygui)
 
                
                     
@@ -232,17 +319,20 @@ class imagedisplayer(object):
 
                 if ch2_spots_img!=[]:
 
-                    All_Channels[ch2_spots_img != 0] = [255,0,0]
+                    All_Channels[ch2_spots_img != 0] = [0,255,0]
 
                 if ch3_spots_img!=[]:
 
-                    All_Channels[ch3_spots_img != 0] = [0,255,0]
+                    All_Channels[ch3_spots_img != 0] = [255,0,0]
 
                 if ch4_spots_img!=[]:
 
                     All_Channels[ch4_spots_img != 0] = [0,0,255]
                     
-                    
+                if ch5_spots_img!=[]:
+
+                    All_Channels[ch5_spots_img != 0] = [255,165,0]
+                       
                 if displaygui.NucPreviewMethod.currentText() == "Cross":
                     
                     pass
@@ -279,9 +369,9 @@ class imagedisplayer(object):
         return ImageForNucMask
        
     
-    def IMAGE_FOR_SPOT_DETECTION(self, nuclei_image):
+    def IMAGE_FOR_SPOT_DETECTION(self, nuclei_image, displaygui):
         
-        ch1_spots_img, ch2_spots_img, ch3_spots_img, ch4_spots_img = [],[],[],[]
+        ch1_spots_img, ch2_spots_img, ch3_spots_img, ch4_spots_img , ch5_spots_img = [],[],[],[],[]
         
         if self.AnalysisGui.SpotCh1CheckBox.isChecked() == True:
             if self.AnalysisGui.SpotMaxZProject.isChecked() == True:
@@ -295,15 +385,21 @@ class imagedisplayer(object):
                                         ]
                 loadedimg_forspot = self.ImageAnalyzer.max_z_project(self.imgforspot)
                 ImageForSpots = cv2.normalize(loadedimg_forspot, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-                coordinates = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
-                ch1_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                coordinates, final_spots = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image, 'Ch1')
+                if displaygui.spotPreviewMethod.currentText() == "Circle":
+                    ch1_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                else:
+                    ch1_spots_img = self.ImageAnalyzer.SPOTS_TO_BOUNDARY(final_spots)
                 
             else:
 
                 loadedimg_forspots = mpimg.imread(self.imgchannels.loc[self.imgchannels['channel']== '1']['ImageName'].iloc[0])
                 ImageForSpots = cv2.normalize(loadedimg_forspots, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-                coordinates = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
-                ch1_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                coordinates,final_spots = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image, 'Ch1')
+                if displaygui.spotPreviewMethod.currentText() == "Circle":
+                    ch1_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                else:
+                    ch1_spots_img = self.ImageAnalyzer.SPOTS_TO_BOUNDARY(final_spots)
         
 
         if self.AnalysisGui.SpotCh2CheckBox.isChecked() == True:
@@ -318,15 +414,21 @@ class imagedisplayer(object):
                                         ]
                 loadedimg_forspot = self.ImageAnalyzer.max_z_project(self.imgforspot)
                 ImageForSpots = cv2.normalize(loadedimg_forspot, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-                coordinates = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
-                ch2_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                coordinates,final_spots = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image, 'Ch2')
+                if displaygui.spotPreviewMethod.currentText() == "Circle":
+                    ch2_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                else:
+                    ch2_spots_img = self.ImageAnalyzer.SPOTS_TO_BOUNDARY(final_spots)
                 
             else:
                 
                 loadedimg_forspots = mpimg.imread(self.imgchannels.loc[self.imgchannels['channel']== '2']['ImageName'].iloc[0])
                 ImageForSpots = cv2.normalize(loadedimg_forspots, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-                coordinates = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
-                ch2_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                coordinates,final_spots = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image, 'Ch2')
+                if displaygui.spotPreviewMethod.currentText() == "Circle":
+                    ch2_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                else:
+                    ch2_spots_img = self.ImageAnalyzer.SPOTS_TO_BOUNDARY(final_spots)
        
                 
         if self.AnalysisGui.SpotCh3CheckBox.isChecked() == True:
@@ -341,14 +443,20 @@ class imagedisplayer(object):
                                         ]
                 loadedimg_forspot = self.ImageAnalyzer.max_z_project(self.imgforspot)
                 ImageForSpots = cv2.normalize(loadedimg_forspot, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-                coordinates = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
-                ch3_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                coordinates,final_spots = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image, 'Ch3')
+                if displaygui.spotPreviewMethod.currentText() == "Circle":
+                    ch3_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                else:
+                    ch3_spots_img = self.ImageAnalyzer.SPOTS_TO_BOUNDARY(final_spots)
             else:
 
                 loadedimg_forspots = mpimg.imread(self.imgchannels.loc[self.imgchannels['channel']== '3']['ImageName'].iloc[0])
                 ImageForSpots = cv2.normalize(loadedimg_forspots, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-                coordinates = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
-                ch3_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                coordinates,final_spots = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image, 'Ch3')
+                if displaygui.spotPreviewMethod.currentText() == "Circle":
+                    ch3_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                else:
+                    ch3_spots_img = self.ImageAnalyzer.SPOTS_TO_BOUNDARY(final_spots)
         
                 
         if self.AnalysisGui.SpotCh4CheckBox.isChecked() == True:
@@ -363,17 +471,50 @@ class imagedisplayer(object):
                                         ]
                 loadedimg_forspot = self.ImageAnalyzer.max_z_project(self.imgforspot)
                 ImageForSpots = cv2.normalize(loadedimg_forspot, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-                coordinates = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
-                ch4_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                coordinates,final_spots = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image, 'Ch4')
+                if displaygui.spotPreviewMethod.currentText() == "Circle":
+                    ch4_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                else:
+                    ch4_spots_img = self.ImageAnalyzer.SPOTS_TO_BOUNDARY(final_spots)
                 
             else:
 
                 loadedimg_forspots = mpimg.imread(self.imgchannels.loc[self.imgchannels['channel']== '4']['ImageName'].iloc[0])
                 ImageForSpots = cv2.normalize(loadedimg_forspots, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-                coordinates = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image)
-                ch1_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                coordinates,final_spots = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image, 'Ch4')
+                if displaygui.spotPreviewMethod.currentText() == "Circle":
+                    ch4_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                else:
+                    ch4_spots_img = self.ImageAnalyzer.SPOTS_TO_BOUNDARY(final_spots)
+                
+        if self.AnalysisGui.SpotCh5CheckBox.isChecked() == True:
+            if self.AnalysisGui.SpotMaxZProject.isChecked() == True:
+
+                self.imgforspot = self.METADATA_DATAFRAME.loc[
+                                        (self.METADATA_DATAFRAME['column'] == str(self.grid_data[0])) & 
+                                        (self.METADATA_DATAFRAME['row'] == str(self.grid_data[1])) & 
+                                        (self.METADATA_DATAFRAME['time_point'] == str(self.grid_data[2])) & 
+                                        (self.METADATA_DATAFRAME['field_index'] == str(self.grid_data[3])) &  
+                                        (self.METADATA_DATAFRAME['channel'] == '5')
+                                        ]
+                loadedimg_forspot = self.ImageAnalyzer.max_z_project(self.imgforspot)
+                ImageForSpots = cv2.normalize(loadedimg_forspot, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+                coordinates,final_spots = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image, 'Ch5')
+                if displaygui.spotPreviewMethod.currentText() == "Circle":
+                    ch5_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                else:
+                    ch5_spots_img = self.ImageAnalyzer.SPOTS_TO_BOUNDARY(final_spots)
+            else:
+
+                loadedimg_forspots = mpimg.imread(self.imgchannels.loc[self.imgchannels['channel']== '4']['ImageName'].iloc[0])
+                ImageForSpots = cv2.normalize(loadedimg_forspots, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+                coordinates,final_spots = self.ImageAnalyzer.SpotDetector(ImageForSpots, self.AnalysisGui, nuclei_image, 'Ch5')
+                if displaygui.spotPreviewMethod.currentText() == "Circle":
+                    ch5_spots_img = self.ImageAnalyzer.COORDINATES_TO_CIRCLE(np.round(coordinates).astype('int'),ImageForSpots)
+                else:
+                    ch5_spots_img = self.ImageAnalyzer.SPOTS_TO_BOUNDARY(final_spots)
             
-        return ch1_spots_img, ch2_spots_img, ch3_spots_img, ch4_spots_img
+        return ch1_spots_img, ch2_spots_img, ch3_spots_img, ch4_spots_img, ch5_spots_img
 
 
     def ON_ADJUST_INTENSITY(self, input_img, min_range, max_range):

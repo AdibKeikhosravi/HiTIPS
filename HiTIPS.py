@@ -22,37 +22,41 @@ class ControlPanel(QWidget):
     def controlUi(self, MainWindow):
         
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1000, 930)
+#         MainWindow.resize(1000, 550)
         font = QtGui.QFont()
         font.setItalic(True)
         MainWindow.setFont(font)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
-#         self.gridLayout_centralwidget = QtWidgets.QGridLayout(self.centralwidget)
-#         self.gridLayout_centralwidget.setObjectName("gridLayout_centralwidget")
         
-        
+     #         layout = QtWidgets.QHBoxLayout(self.scrollAreaWidgetContents)
+
+        self.gridLayout_centralwidget = QtWidgets.QGridLayout(self.centralwidget)
+             
 ######  Instantiating GUI classes
 
-
-        self.analysisgui = AnalysisGUI.analyzer(self.centralwidget)
+        self.inout_resource_gui = IO_ResourceGUI.InOut_resource(self.centralwidget,self.gridLayout_centralwidget)
+        self.analysisgui = AnalysisGUI.analyzer(self.centralwidget, self.gridLayout_centralwidget)
+#         self.gridLayout_centralwidget.addWidget(self.analysisgui, 1, 11, 10, 12)
         self.analysisgui.setEnabled(False)
-        self.displaygui = DisplayGUI_Copy1.display(self.centralwidget)
+        self.displaygui = DisplayGUI_Copy1.display()
+        self.displaygui.show()
         #self.displaygui = DisplayGUI.display(self.centralwidget)
         self.displaygui.setEnabled(False)
           
         self.inputoutputcontrol = InputOutput.inputoutput_control()
-        self.inout_resource_gui = IO_ResourceGUI.InOut_resource(self.centralwidget)
         
+#         self.gridLayout_centralwidget.addWidget(self.inout_resource_gui, 1, 1, 4, 10)
         
         self.image_analyzer = Analysis.ImageAnalyzer(self.analysisgui, self.inout_resource_gui)
         #self.ImDisplay = Display.imagedisplayer(self.analysisgui,self.centralwidget)
         self.ImDisplay = Display_Copy1.imagedisplayer(self.analysisgui,self.centralwidget, self.analysisgui)
-        self.PlateGrid = GridLayout.gridgenerator(self.centralwidget)
+        self.PlateGrid = GridLayout.gridgenerator(self.centralwidget, self.gridLayout_centralwidget)
         self.PlateGrid.setEnabled(False)
         
         self.CV_Reader = MetaData_Reader.CellVoyager()        
     
+#         self.setLayout(self.gridLayout_centralwidget)
         MainWindow.setCentralWidget(self.centralwidget)
         
 ######  Input Output loader controllers
@@ -107,6 +111,13 @@ class ControlPanel(QWidget):
         self.displaygui.Ch2CheckBox.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
         self.displaygui.Ch3CheckBox.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
         self.displaygui.Ch4CheckBox.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
+        self.displaygui.Ch5CheckBox.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
+        
+        self.displaygui.Ch1maxproject.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
+        self.displaygui.Ch2maxproject.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
+        self.displaygui.Ch3maxproject.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
+        self.displaygui.Ch4maxproject.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
+        self.displaygui.Ch5maxproject.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
         
          ###### histogram controllers
         self.displaygui.MaxHistSlider.sliderReleased.connect(lambda:
@@ -124,9 +135,13 @@ class ControlPanel(QWidget):
         ####### Nuclei and spot visualization controllers
         
         self.displaygui.NuclMaskCheckBox.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
-        self.analysisgui.NucSecondThresholdSlider.sliderReleased.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
-        self.analysisgui.NucFirstThresholdSlider.sliderReleased.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
+        self.analysisgui.NucDetectionSlider.sliderReleased.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
+        self.analysisgui.NucSeparationSlider.sliderReleased.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
         self.analysisgui.NucleiAreaSlider.sliderReleased.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
+        
+        self.analysisgui.NucDetectMethod.currentIndexChanged.connect(lambda: 
+                                                                     self.analysisgui.INITIALIZE_SEGMENTATION_PARAMETERS())
+        self.analysisgui.NucDetectMethod.currentIndexChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
         
         self.displaygui.NucPreviewMethod.currentIndexChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
         
@@ -144,18 +159,26 @@ class ControlPanel(QWidget):
         self.batchanalysis = BatchAnalyzer.BatchAnalysis(self.analysisgui, self.image_analyzer, self.inout_resource_gui)
         #self.analysisgui.NucMaxZprojectCheckBox.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
         self.analysisgui.SpotMaxZProject.stateChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
-        
         self.analysisgui.RunAnalysis.clicked.connect(lambda: self.batchanalysis.ON_APPLYBUTTON(self.Meta_Data_df))
         
         self.analysisgui.ResetButton.clicked.connect(lambda: self.ON_RESET_BUTTON())
         self.analysisgui.ThresholdSlider.sliderReleased.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
+        self.analysisgui.SensitivitySpinBox.valueChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
+        self.analysisgui.spotanalysismethod.currentIndexChanged.connect(lambda: self.ImDisplay.GET_IMAGE_NAME(self.displaygui))
+        
+        self.analysisgui.ThresholdSlider.sliderReleased.connect(lambda: self.image_analyzer.UPDATE_SPOT_ANALYSIS_PARAMS())
+        self.analysisgui.SensitivitySpinBox.valueChanged.connect(lambda: self.image_analyzer.UPDATE_SPOT_ANALYSIS_PARAMS())
+        self.analysisgui.SpotPerChSpinBox.valueChanged.connect(lambda: self.image_analyzer.UPDATE_SPOT_ANALYSIS_PARAMS())
+        self.analysisgui.spotanalysismethod.currentIndexChanged.connect(lambda: self.image_analyzer.UPDATE_SPOT_ANALYSIS_PARAMS())
+        
+        self.analysisgui.spotchannelselect.currentIndexChanged.connect(lambda: self.image_analyzer.UPDATE_SPOT_ANALYSIS_GUI_PARAMS())
       #  self.analysisgui.CloseButton.clicked.connect(self.closeEvent)
         ##################
         
         ####### Menu Bar 
         
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1000, 30))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1000, 0))
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
@@ -183,8 +206,8 @@ class ControlPanel(QWidget):
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuTool.menuAction())
         
-        self.saveConfig.triggered.connect(self.analysisgui.file_save)
-        self.LoadConfig.triggered.connect(self.analysisgui.LOAD_CONFIGURATION)
+        self.saveConfig.triggered.connect(lambda:self.analysisgui.file_save(self.image_analyzer))
+        self.LoadConfig.triggered.connect(lambda:self.analysisgui.LOAD_CONFIGURATION(self.image_analyzer))
         
         
         
@@ -227,28 +250,65 @@ class ControlPanel(QWidget):
             fullstring = self.items[i].firstChild.data
             substring = "Error"
 
-            if fullstring.find(substring) == -1:
-                rows.append({
-
-                     "ImageName": os.path.join(PATH_TO_FILES, self.items[i].firstChild.data), 
-                     "column": self.items[i].attributes['bts:Column'].value, 
-                     "row": self.items[i].attributes['bts:Row'].value, 
-                     "time_point": self.items[i].attributes['bts:TimePoint'].value, 
-                     "field_index": self.items[i].attributes['bts:FieldIndex'].value, 
-                     "z_slice": self.items[i].attributes['bts:ZIndex'].value, 
-                     "channel": self.items[i].attributes['bts:Ch'].value,
-                     "x_coordinates": self.items[i].attributes['bts:X'].value,
-                     "y_coordinates": self.items[i].attributes['bts:Y'].value,
-                     "z_coordinate": self.items[i].attributes['bts:Z'].value,
-                     "action_index": self.items[i].attributes['bts:ActionIndex'].value,
-                     "action": self.items[i].attributes['bts:Action'].value, 
-                     "Type": self.items[i].attributes['bts:Type'].value, 
-                     "Time": self.items[i].attributes['bts:Time'].value,
-                     "PixPerMic": items_mrf[0].attributes['bts:HorizontalPixelDimension'].value
-                })
             
+            if fullstring.find(substring) == -1:
+                if self.items[i].attributes['bts:Type'].value=='IMG':
+                    rows.append({
+
+                         "ImageName": os.path.join(PATH_TO_FILES, self.items[i].firstChild.data), 
+                         "column": self.items[i].attributes['bts:Column'].value, 
+                         "row": self.items[i].attributes['bts:Row'].value, 
+                         "time_point": self.items[i].attributes['bts:TimePoint'].value, 
+                         "field_index": self.items[i].attributes['bts:FieldIndex'].value, 
+                         "z_slice": self.items[i].attributes['bts:ZIndex'].value, 
+                         "channel": self.items[i].attributes['bts:Ch'].value,
+                         "x_coordinates": self.items[i].attributes['bts:X'].value,
+                         "y_coordinates": self.items[i].attributes['bts:Y'].value,
+                         "z_coordinate": self.items[i].attributes['bts:Z'].value,
+                         "action_index": self.items[i].attributes['bts:ActionIndex'].value,
+                         "action": self.items[i].attributes['bts:Action'].value, 
+                         "Type": self.items[i].attributes['bts:Type'].value, 
+                         "Time": self.items[i].attributes['bts:Time'].value,
+                         "PixPerMic": items_mrf[0].attributes['bts:HorizontalPixelDimension'].value
+                    })
         
         self.Meta_Data_df = pd.DataFrame(rows, columns = df_cols)
+        
+        
+        ##### mrf data
+        
+        df_cols = ["Source","channel"]
+        rows = []
+        
+        for i in range(items_mrf.length):
+            
+            rows.append({
+
+                 "Source": items_mrf[i].attributes['bts:ShadingCorrectionSource'].value, 
+                 "channel": items_mrf[i].attributes['bts:Ch'].value,
+            })
+            _translate = QtCore.QCoreApplication.translate
+            if str(items_mrf[i].attributes['bts:Ch'].value)=='1':
+                text1 = "Ch1: " + items_mrf[i].attributes['bts:ShadingCorrectionSource'].value[5:11]
+                self.displaygui.Ch1CheckBox.setText(_translate("MainWindow", text1))
+            if str(items_mrf[i].attributes['bts:Ch'].value)=='2':
+                text2 = "Ch2: " + items_mrf[i].attributes['bts:ShadingCorrectionSource'].value[5:11]
+                self.displaygui.Ch2CheckBox.setText(_translate("MainWindow", text2))
+            if str(items_mrf[i].attributes['bts:Ch'].value)=='3':
+                text3 = "Ch3: " + items_mrf[i].attributes['bts:ShadingCorrectionSource'].value[5:11]
+                self.displaygui.Ch3CheckBox.setText(_translate("MainWindow", text3))
+            if str(items_mrf[i].attributes['bts:Ch'].value)=='4':
+                text4 = "Ch4: " + items_mrf[i].attributes['bts:ShadingCorrectionSource'].value[5:11]
+                self.displaygui.Ch4CheckBox.setText(_translate("MainWindow", text4))
+            if str(items_mrf[i].attributes['bts:Ch'].value)=='5':
+                text5 = "Ch5: " + items_mrf[i].attributes['bts:ShadingCorrectionSource'].value[5:11]
+                self.displaygui.Ch5CheckBox.setText(_translate("MainWindow", text5))
+
+
+        self.Mrf_Data_df = pd.DataFrame(rows, columns = df_cols)
+        
+        
+        print(self.Mrf_Data_df)
         
         
         
@@ -273,11 +333,7 @@ class ControlPanel(QWidget):
 
         QtWidgets.qApp.exit( ControlPanel.EXIT_CODE_REBOOT )
         
-        
-      
-
-      
-            
+           
 if __name__ == "__main__":
     
     currentExitCode = ControlPanel.EXIT_CODE_REBOOT
