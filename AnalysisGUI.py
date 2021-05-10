@@ -185,7 +185,7 @@ class analyzer(QWidget):
         self.gridLayout_NucleiDetection.addWidget(self.NucleiAreaSlider, 4, 1, 1, 1)
         self.NucleiAreaSlider.setOrientation(QtCore.Qt.Horizontal)
         self.NucleiAreaSlider.setObjectName("NucleiAreaSlider")
-        self.NucleiAreaSlider.setMaximum(100)
+        self.NucleiAreaSlider.setMaximum(250)
         self.NucleiAreaSlider.setMinimum(0)
         self.NucleiAreaSlider.setValue(30)
         self.NucleiAreaSlider.valueChanged.connect(lambda: self.NUCLEI_AREA_LABEL_UPDATE())

@@ -120,6 +120,7 @@ class display(QWidget):
         self.NucPreviewMethod.setObjectName("NucPreviewMethod")
         self.NucPreviewMethod.addItem("Boundary")
         self.NucPreviewMethod.addItem("Area")
+        self.NucPreviewMethod.addItem("Nuc.Index")
         
         self.SpotsCheckBox = QtWidgets.QCheckBox(self)
 #         self.SpotsCheckBox.setGeometry(QtCore.QRect(480, 370 + IO_GUI_HEIGHT +20, 60, 20))
@@ -169,6 +170,7 @@ class display(QWidget):
         self.NuclMaskCheckBox.setText(_translate("MainWindow", "Nuclei"))
         self.NucPreviewMethod.setItemText(0, _translate("MainWindow", "Boundary"))
         self.NucPreviewMethod.setItemText(1, _translate("MainWindow", "Area"))
+        self.NucPreviewMethod.setItemText(2, _translate("MainWindow", "Nuc.Index"))
         self.spotPreviewMethod.setItemText(0, _translate("MainWindow", "Circle"))
         self.spotPreviewMethod.setItemText(1, _translate("MainWindow", "Boundary"))
         

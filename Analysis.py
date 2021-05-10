@@ -7,9 +7,12 @@ from skimage.feature import peak_local_max
 from skimage.draw import circle_perimeter
 import math
 from skimage.filters import median, gaussian, sobel
-from skimage.morphology import disk, binary_closing, skeletonize, binary_opening, binary_erosion
+from skimage.morphology import disk, binary_closing, skeletonize, binary_opening, binary_erosion, white_tophat
 from skimage.filters import threshold_li
 from skimage.segmentation import watershed, find_boundaries
+from skimage.exposure import equalize_adapthist
+from skimage.measure import regionprops, regionprops_table
+import pandas as pd
 from cellpose import models, utils
 import tensorflow as tf
 from tensorflow.keras import backend as K
@@ -89,13 +92,17 @@ class ImageAnalyzer(object):
         return boundary, mask
         
     def cellpose_segmenter(self, input_img, use_GPU, cell_dia=None):
-	
+        
+        img_uint8 = cv2.copyMakeBorder(input_img,5,5,5,5,cv2.BORDER_CONSTANT,value=0)
+        
         model = models.Cellpose(gpu=use_GPU, model_type='nuclei')
-        masks, flows, styles, diams = model.eval(input_img, diameter=cell_dia, flow_threshold=None)
+        masks, flows, styles, diams = model.eval(img_uint8, diameter=cell_dia, flow_threshold=None)
 	
         boundary = find_boundaries(masks, connectivity=1, mode='thick', background=0)
-        boundary_img = (255*boundary).astype('uint8')
-        resized_bound = boundary_img
+#         boundary_img = (255*boundary).astype('uint8')
+        boundary_img = (255*boundary[3:boundary.shape[0]-3,3:boundary.shape[1]-3]).astype('uint8')
+        resized_bound = cv2.resize(boundary_img,(input_img.shape[1],input_img.shape[0]))
+#         resized_bound = boundary_img
         filled1 = ndimage.binary_fill_holes(resized_bound)
         mask= (255*filled1).astype('uint8')-resized_bound
         boundary= resized_bound.astype('uint8')
@@ -261,17 +268,30 @@ class ImageAnalyzer(object):
         struct = ndimage.generate_binary_structure(2, 2)
         filled = ndimage.binary_dilation(filled, structure=struct).astype(filled.dtype)
         filled = ndimage.binary_dilation(filled, structure=struct).astype(filled.dtype)
-        
-#         sig=self.AnalysisGui.SensitivitySpinBox.value()
+        #### this part is for removing bright junk in the image################
+        labeled_nuc, num_features_nuc = label(filled)
+        props = regionprops_table(labeled_nuc, input_image, properties=('label', 'area', 'max_intensity', 'mean_intensity'))
+        props_df = pd.DataFrame(props)
+        mean_intensity_ave=props_df['mean_intensity'].mean()
+        max_intensity_max=props_df['max_intensity'].max()
+        for ind, row in props_df.iterrows():
+            
+            if row['mean_intensity'] > 2*mean_intensity_ave:
+                
+                input_image[labeled_nuc==row['label']]=0
+        input_image[input_image>max_intensity_max]=0       
+        input_image = cv2.normalize(input_image, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)    
+########################################
         sig=params_to_pass[3]
         if str(params_to_pass[0]) == '0':
             
             log_result = ndimage.gaussian_laplace(input_image, sigma=sig)
-            
             if str(params_to_pass[1]) == '0':
                 
+
                 ret_log, thresh_log = cv2.threshold(log_result,0,255,cv2.THRESH_BINARY_INV+cv2.THRESH_OTSU)
                 bin_img_log = (1-thresh_log/255).astype('bool')
+
             if str(params_to_pass[1]) == '1':
                 
                 manual_threshold = np.ceil(params_to_pass[2]*2.55).astype(int)

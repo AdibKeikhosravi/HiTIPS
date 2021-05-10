@@ -59,10 +59,10 @@ class BatchAnalysis(object):
         time_points = np.unique(np.asarray(self.Meta_Data_df['time_point'], dtype=int))
         actionindices = np.unique(np.asarray(self.Meta_Data_df['action_index'], dtype=int))
         
-        jobs_number=np.int(self.inout_resource_gui.NumCPUsSpinBox.value())
-#         Parallel(n_jobs=jobs_number)(delayed(self.BATCH_ANALYZER)(col,row,fov,t) for t in time_points for fov in fovs for row in rows for col in columns)
-        with Pool(jobs_number) as p:
-            p.map(self.BATCH_ANALYZER, columns, rows, fovs, time_points)
+        jobs_number=self.inout_resource_gui.NumCPUsSpinBox.value()
+        Parallel(n_jobs=jobs_number, prefer="threads")(delayed(self.BATCH_ANALYZER)(col,row,fov,t) for t in time_points for fov in fovs for row in rows for col in columns)
+#         with Pool(jobs_number) as p:
+#             p.map(self.BATCH_ANALYZER, columns, rows, fovs, time_points)
             
         xlsx_output_folder = os.path.join(self.output_folder, 'whole_plate_resutls')
         if os.path.isdir(xlsx_output_folder) == False:
@@ -186,7 +186,7 @@ class BatchAnalysis(object):
         if self.AnalysisGui.SpotsDistance.isChecked() == True:
             columns = np.unique(np.asarray(self.cell_df['column'], dtype=int))
             rows = np.unique(np.asarray(self.cell_df['row'], dtype=int))
-            Parallel(n_jobs=jobs_number)(delayed(self.Calculate_Spot_Distances)(row, col) for row in rows for col in columns)
+            Parallel(n_jobs=jobs_number, prefer="threads")(delayed(self.Calculate_Spot_Distances)(row, col) for row in rows for col in columns)
 
         seconds2 = time.time()
         
@@ -648,11 +648,15 @@ class BatchAnalysis(object):
         coordinates_list = np.ones((0,3), dtype='float')
         xyz_coordinates = []
         coordinates_stack =[]
+        
+            
         for index, row in images_pd_df.iterrows():
             im = mpimg.imread(row['ImageName'])
-            print(row['ImageName'])
+            
             _z_coordinates1 = np.asarray(row['z_slice']).astype('float')
             im_uint8 = cv2.normalize(im, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+            z_imglist.append( np.asarray(im_uint8))
+            
             coordinates, final_spots = self.ImageAnalyzer.SpotDetector(im_uint8, self.AnalysisGui, ImageForNucMask, spot_channel)
             
             if coordinates.__len__()>0:
@@ -663,13 +667,14 @@ class BatchAnalysis(object):
             
             xyz_3d_coordinates = np.append(np.asarray(coordinates).astype('float'), _z_coordinates, 1)
             coordinates_list = np.append(coordinates_list, xyz_3d_coordinates,0)
-            z_imglist.append( np.asarray(im_uint8))
+            
 
-        
         if z_imglist.__len__()>0:
+            print(row['ImageName'])
             image_stack = np.stack(z_imglist, axis=2)
             max_project = image_stack.max(axis=2)
-            coordinates_max_project, final_spots = self.ImageAnalyzer.SpotDetector(im_uint8, self.AnalysisGui, 
+            max_im_uint8 = cv2.normalize(max_project, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+            coordinates_max_project, final_spots = self.ImageAnalyzer.SpotDetector(max_im_uint8, self.AnalysisGui, 
                                                                                    ImageForNucMask, spot_channel)
         
             if coordinates_max_project.__len__()>0:
@@ -680,15 +685,15 @@ class BatchAnalysis(object):
                 coordinates_max_project_round = coordinates_max_project_round[coordinates_max_project_round.min(axis=1)>=0,:]
                 spots_z_slices = np.argmax(image_stack[coordinates_max_project_round[:,0],coordinates_max_project_round[:,1],:], axis=1)
                 spots_z_coordinates = np.zeros((spots_z_slices.__len__(),1), dtype='float')
-
                 
                 for i in range(spots_z_slices.__len__()):
 
                     spots_z_coordinates[i] = np.asarray(images_pd_df.loc[images_pd_df['z_slice']== str(spots_z_slices[i]+1)]
                                                      ['z_coordinate'].iloc[0]).astype('float')
+                if coordinates_max_project==[]:
+                    coordinates_max_project==np.ones((0,2), dtype='float')
                 xyz_coordinates = np.append(np.asarray(coordinates_max_project).astype('float'), spots_z_coordinates, 1)
 
-         
         return xyz_coordinates, coordinates_stack
     
     

@@ -7,6 +7,7 @@ import matplotlib.image as mpimg
 import cv2
 from PIL import Image
 from skimage import exposure
+from skimage.measure import regionprops, regionprops_table
 from PIL import Image, ImageQt
 import qimage2ndarray
 from Analysis import ImageAnalyzer
@@ -306,6 +307,27 @@ class imagedisplayer(object):
                     image_input_stack = np.stack((self.input_image,)*3, axis=-1)
                     All_Channels = cv2.addWeighted(rgblabel,0.2, ch1_rgb, 1, 0)
                     ##############
+                    
+                if displaygui.NucPreviewMethod.currentText() == "Nuc.Index":
+                    
+                    All_Channels[bound != 0] = [255,0,0]
+                    labeled_array, num_features = label(filled_res)
+                    props = regionprops_table(labeled_array, properties=('label', 'centroid','area' ))
+                    props_df = pd.DataFrame(props)
+                    props_df1=props_df[props_df['area']>5]
+
+                    font = cv2.FONT_HERSHEY_SIMPLEX
+                    
+                    fontScale              = int(1)
+                    fontColor              = (255,0,255)
+                    lineType               = int(2)
+                    if labeled_array.max()>0:
+                        for row_ind, row in props_df1.iterrows():
+                            
+                            txt=str(row["label"])
+                            bottomLeftCornerOfText = (int(round(row["centroid-1"])), int(round(row["centroid-0"])))
+                            cv2.putText(All_Channels,txt, bottomLeftCornerOfText, font, fontScale, fontColor, lineType)
+                    
             if displaygui.SpotsCheckBox.isChecked() == True:
                 
                 self.input_image = self.IMAGE_TO_BE_MASKED()
