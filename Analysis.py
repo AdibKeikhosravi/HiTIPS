@@ -54,14 +54,14 @@ class ImageAnalyzer(object):
             Cell_Size = self.AnalysisGui.NucleiAreaSlider.value()
             cell_diameter = np.sqrt(Cell_Size/(float(pixpermic)*float(pixpermic)))*2/3.14
             
-            boundary, mask = self.cellpose_segmenter(input_img, use_GPU=1, cell_dia=cell_diameter)
+            boundary, mask = self.cellpose_segmenter(input_img, use_GPU=True, cell_dia=cell_diameter)
             
         if self.AnalysisGui.NucDetectMethod.currentText() == "CellPose-CPU":
             
             Cell_Size = self.AnalysisGui.NucleiAreaSlider.value()
             cell_diameter = np.sqrt(Cell_Size/(float(pixpermic)*float(pixpermic)))*2/3.14
             
-            boundary, mask = self.cellpose_segmenter(input_img, use_GPU=0, cell_dia=cell_diameter)
+            boundary, mask = self.cellpose_segmenter(input_img, use_GPU=False, cell_dia=cell_diameter)
             
         if self.AnalysisGui.NucDetectMethod.currentText() == "DeepCell":
             
@@ -112,7 +112,6 @@ class ImageAnalyzer(object):
     def segmenter_function(self, input_img, cell_size=None, first_threshold=None, second_threshold=None):
     
         img_uint8 = cv2.copyMakeBorder(input_img,5,5,5,5,cv2.BORDER_CONSTANT,value=0)
-        
         
         ## First blurring round
         if (cell_size %2)==0:
@@ -245,7 +244,6 @@ class ImageAnalyzer(object):
         return max_project
     
    
-    
     def SpotDetector(self, input_image, AnalysisGui, nuclei_image, spot_channel):
         
         self.UPDATE_SPOT_ANALYSIS_PARAMS()

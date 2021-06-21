@@ -12,18 +12,22 @@ from PIL import Image, ImageQt
 from scipy.ndimage import label, distance_transform_edt
 import multiprocessing
 from joblib import Parallel, delayed
-import dill as pickle
-# from multiprocessing import Pool
-from pathos.multiprocessing import ProcessingPool as Pool
+from multiprocessing import Pool, Process, Manager
+# from pathos.multiprocessing import ProcessingPool as Pool
+from GUI_parameters import Gui_Params
 
 WELL_PLATE_ROWS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
 
 class BatchAnalysis(object):
     output_folder = []
+    manager = Manager()
+    cell_pd_list, ch1_spot_df_list, ch2_spot_df_list = manager.list(), manager.list(), manager.list()
+    ch3_spot_df_list, ch4_spot_df_list, ch5_spot_df_list = manager.list(), manager.list(), manager.list()
     def __init__(self,analysisgui, image_analyzer, inout_resource_gui):
 
         self.inout_resource_gui = inout_resource_gui
         self.AnalysisGui = analysisgui
+        
         self.ImageAnalyzer = image_analyzer
         self.ch1_spot_df, self.ch2_spot_df, self.ch3_spot_df = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
         self.ch4_spot_df, self.ch5_spot_df, self.cell_df = pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
@@ -34,11 +38,11 @@ class BatchAnalysis(object):
         self.output_prefix = []
     
     def ON_APPLYBUTTON(self, Meta_Data_df):
+        self.gui_params = Gui_Params(self.AnalysisGui,self.inout_resource_gui)
         seconds1 = time.time()
         while self.inout_resource_gui.Output_dir ==[]:
                 
             self.inout_resource_gui.OUTPUT_FOLDER_LOADBTN()
-            
         self.Meta_Data_df = Meta_Data_df
         path_list = os.path.split(self.Meta_Data_df["ImageName"][0])[0].split(r'/')
         self.experiment_name = path_list[path_list.__len__()-2]
@@ -59,17 +63,50 @@ class BatchAnalysis(object):
         time_points = np.unique(np.asarray(self.Meta_Data_df['time_point'], dtype=int))
         actionindices = np.unique(np.asarray(self.Meta_Data_df['action_index'], dtype=int))
         
-        jobs_number=self.inout_resource_gui.NumCPUsSpinBox.value()
-        Parallel(n_jobs=jobs_number, prefer="threads")(delayed(self.BATCH_ANALYZER)(col,row,fov,t) for t in time_points for fov in fovs for row in rows for col in columns)
-#         with Pool(jobs_number) as p:
-#             p.map(self.BATCH_ANALYZER, columns, rows, fovs, time_points)
+        jobs_number=self.gui_params.NumCPUsSpinBox_value
+#         Parallel(n_jobs=jobs_number)(delayed(self.BATCH_ANALYZER)(col,row,fov,t) for t in time_points for fov in fovs for row in rows for col in columns)
+        
+        func_args=np.zeros((0,4),dtype=int)
+        for t in time_points:
+            for fov in fovs:
+                for row in rows:
+                    for col in columns:
+                        df_parallel = self.Meta_Data_df.loc[(self.Meta_Data_df['column'] == str(col)) & 
+                                                              (self.Meta_Data_df['row'] == str(row)) & 
+                                                              (self.Meta_Data_df['field_index'] == str(fov)) & 
+                                                              (self.Meta_Data_df['time_point'] == str(t))]
+                        if df_parallel.empty == False:
+                            
+                            func_args=np.append(func_args,np.array([col,row,fov,t]).reshape(1,4),axis=0)
+
+        arg_len,_=func_args.shape
+        start_pos=np.arange(0,arg_len,jobs_number)
+        for st in start_pos:
+            
+            if st+jobs_number-1 >= arg_len:
+                
+                data_ind=np.arange(st, arg_len+1)
+            else:
+                data_ind=np.arange(st, st+jobs_number)
+            
+            processes=[]
+            for ind1 in data_ind:
+                process_args= np.array(func_args[ind1,:],dtype=int)
+                processes.append(Process(target=self.BATCH_ANALYZER, args=process_args))
+            # kick them off 
+            for process in processes:
+                process.start()
+            # now wait for them to finish
+            for process in processes:
+                process.join()
             
         xlsx_output_folder = os.path.join(self.output_folder, 'whole_plate_resutls')
         if os.path.isdir(xlsx_output_folder) == False:
             os.mkdir(xlsx_output_folder) 
                                                                                                 
-        if self.AnalysisGui.NucInfoChkBox.isChecked() == True:
+        if self.gui_params.NucInfoChkBox_check_status == True:
             
+            self.cell_df = pd.concat(self.cell_pd_list)
             xlsx_name = ['Nuclei_Information.xlsx']
             xlsx_full_name = os.path.join(xlsx_output_folder, xlsx_name[0])
             self.cell_df.rename(columns={ "label":"cell_index"})
@@ -80,16 +117,18 @@ class BatchAnalysis(object):
                 os.mkdir(well_nuc_folder)
             for col in columns:
                 for row in rows:
+
                     well_nuc_df = self.cell_df.loc[(self.cell_df['column'] == col) & (self.cell_df['row'] == row)]
                     if well_nuc_df.empty == False:
                         well_nuc_filename = self.output_prefix + '_nuclei_information_well_' + WELL_PLATE_ROWS[row-1] + str(col) + r'.csv'
                         nuc_well_csv_full_name = os.path.join(well_nuc_folder, well_nuc_filename)
                         well_nuc_df.to_csv(path_or_buf=nuc_well_csv_full_name, encoding='utf8')
-
-        if self.ch1_spot_df.empty == False:
-            
-            if self.AnalysisGui.SpotsLocation.isChecked() == True:
-                coordinates_method = self.AnalysisGui.SpotLocationCbox.currentText()
+        
+        
+        if self.ch1_spot_df_list.__len__() > 0:
+            self.ch1_spot_df = pd.concat(self.ch1_spot_df_list)
+            if self.gui_params.NucInfoChkBox_check_status == True:
+                coordinates_method = self.gui_params.SpotLocationCbox_currentText
                 xlsx_name = ['Ch1_Spot_Locations_' + coordinates_method + r'.xlsx']
                 xlsx_full_name = os.path.join(xlsx_output_folder, xlsx_name[0])
                 self.ch1_spot_df.to_excel(xlsx_full_name)
@@ -105,12 +144,11 @@ class BatchAnalysis(object):
                             spot_loc_well_csv_full_name = os.path.join(well_spot_loc_folder, spot_loc_filename)
                             spot_loc_df.to_csv(path_or_buf=spot_loc_well_csv_full_name, encoding='utf8')
                 
-                
+        if self.ch2_spot_df_list.__len__() > 0:
+            self.ch2_spot_df = pd.concat(self.ch2_spot_df_list)
             
-        if self.ch2_spot_df.empty == False:
-            
-            if self.AnalysisGui.SpotsLocation.isChecked() == True:
-                coordinates_method = self.AnalysisGui.SpotLocationCbox.currentText()
+            if self.gui_params.SpotsLocation_check_status == True:
+                coordinates_method = self.gui_params.SpotLocationCbox_currentText
                 xlsx_name = ['Ch2_Spot_Locations_' + coordinates_method + r'.xlsx']
                 xlsx_full_name = os.path.join(xlsx_output_folder, xlsx_name[0])
                 self.ch2_spot_df.to_excel(xlsx_full_name)   
@@ -125,11 +163,12 @@ class BatchAnalysis(object):
                             spot_loc_filename = self.output_prefix + '_ch2_spots_locations_well_' + WELL_PLATE_ROWS[row-1] + str(col) + r'.csv'
                             spot_loc_well_csv_full_name = os.path.join(well_spot_loc_folder, spot_loc_filename)
                             spot_loc_df.to_csv(path_or_buf=spot_loc_well_csv_full_name, encoding='utf8')
+        
+        if self.ch3_spot_df_list.__len__() > 0:
+            self.ch3_spot_df = pd.concat(self.ch3_spot_df_list)
             
-        if self.ch3_spot_df.empty == False:
-            
-            if self.AnalysisGui.SpotsLocation.isChecked() == True:
-                coordinates_method = self.AnalysisGui.SpotLocationCbox.currentText()
+            if self.gui_params.SpotsLocation_check_status == True:
+                coordinates_method = self.gui_params.SpotLocationCbox_currentText
                 xlsx_name = ['Ch3_Spot_Locations_' + coordinates_method + r'.xlsx']
                 xlsx_full_name = os.path.join(xlsx_output_folder, xlsx_name[0])
                 self.ch3_spot_df.to_excel(xlsx_full_name)   
@@ -144,11 +183,12 @@ class BatchAnalysis(object):
                             spot_loc_filename = self.output_prefix + '_ch3_spots_locations_well_' + WELL_PLATE_ROWS[row-1] + str(col) + r'.csv'
                             spot_loc_well_csv_full_name = os.path.join(well_spot_loc_folder, spot_loc_filename)
                             spot_loc_df.to_csv(path_or_buf=spot_loc_well_csv_full_name, encoding='utf8')
+        
+        if self.ch4_spot_df_list.__len__() > 0:
+            self.ch4_spot_df = pd.concat(self.ch4_spot_df_list)
             
-        if self.ch4_spot_df.empty == False:
-            
-            if self.AnalysisGui.SpotsLocation.isChecked() == True:
-                coordinates_method = self.AnalysisGui.SpotLocationCbox.currentText()
+            if self.gui_params.SpotsLocation_check_status == True:
+                coordinates_method = self.gui_params.SpotLocationCbox_currentText
                 xlsx_name = ['Ch4_Spot_Locations_' + coordinates_method + r'.xlsx']
                 xlsx_full_name = os.path.join(xlsx_output_folder, xlsx_name[0])
                 self.ch4_spot_df.to_excel(xlsx_full_name) 
@@ -163,11 +203,12 @@ class BatchAnalysis(object):
                             spot_loc_filename = self.output_prefix + '_ch4_spots_locations_well_' + WELL_PLATE_ROWS[row-1] + str(col) + r'.csv'
                             spot_loc_well_csv_full_name = os.path.join(well_spot_loc_folder, spot_loc_filename)
                             spot_loc_df.to_csv(path_or_buf=spot_loc_well_csv_full_name, encoding='utf8')
+        
+        if self.ch5_spot_df_list.__len__() > 0:
+            self.ch5_spot_df = pd.concat(self.ch5_spot_df_list)
             
-        if self.ch5_spot_df.empty == False:
-            
-            if self.AnalysisGui.SpotsLocation.isChecked() == True:
-                coordinates_method = self.AnalysisGui.SpotLocationCbox.currentText()
+            if self.gui_params.SpotsLocation_check_status == True:
+                coordinates_method = self.gui_params.SpotLocationCbox_currentText
                 xlsx_name = ['Ch5_Spot_Locations_' + coordinates_method + r'.xlsx']
                 xlsx_full_name = os.path.join(xlsx_output_folder, xlsx_name[0])
                 self.ch5_spot_df.to_excel(xlsx_full_name)   
@@ -183,7 +224,7 @@ class BatchAnalysis(object):
                             spot_loc_well_csv_full_name = os.path.join(well_spot_loc_folder, spot_loc_filename)
                             spot_loc_df.to_csv(path_or_buf=spot_loc_well_csv_full_name, encoding='utf8')
             
-        if self.AnalysisGui.SpotsDistance.isChecked() == True:
+        if self.gui_params.SpotsDistance_check_status == True:
             columns = np.unique(np.asarray(self.cell_df['column'], dtype=int))
             rows = np.unique(np.asarray(self.cell_df['row'], dtype=int))
             Parallel(n_jobs=jobs_number, prefer="threads")(delayed(self.Calculate_Spot_Distances)(row, col) for row in rows for col in columns)
@@ -197,9 +238,9 @@ class BatchAnalysis(object):
         ai = 1
         
         self.df_checker = self.Meta_Data_df.loc[(self.Meta_Data_df['column'] == str(col)) & 
-                                      (self.Meta_Data_df['row'] == str(row)) & 
-                                      (self.Meta_Data_df['field_index'] == str(fov)) & 
-                                      (self.Meta_Data_df['time_point'] == str(t))]
+                                              (self.Meta_Data_df['row'] == str(row)) & 
+                                              (self.Meta_Data_df['field_index'] == str(fov)) & 
+                                              (self.Meta_Data_df['time_point'] == str(t))]
         if self.df_checker.empty == False:
         
             ImageForNucMask = self.IMG_FOR_NUC_MASK()
@@ -228,23 +269,15 @@ class BatchAnalysis(object):
                                             'orientation', 'perimeter', 'solidity'))
                     pixpermicron = np.asarray(self.Meta_Data_df["PixPerMic"].iloc[0]).astype(float)
                     props_df = pd.DataFrame(props)
-                    
-#                     props_df.columns[8]=("centroid_x", "centroid_y")
-#                     props_df.columns[7]= ["cell_index"]
                     props_df['major_axis_length'] = pixpermicron*props_df['major_axis_length']
                     props_df['minor_axis_length'] = pixpermicron*props_df['minor_axis_length']
                     props_df['area'] = pixpermicron*pixpermicron*props_df['area']
                     props_df['perimeter'] = pixpermicron*props_df['perimeter']
                     image_cells_df = pd.concat([df,props_df], axis=1)
-                    self.cell_df = pd.concat([self.cell_df, image_cells_df], axis=0, ignore_index=True)
-                    
-#                     self.cell_df.columns=["Experiment","column","row","time_point","field_index","z_slice","action_index",
-#                                       "cell_index", ("centroid_x", "centroid_y"),'orientation', 'major_axis_length', 
-#                                       'minor_axis_length','area', 'max_intensity', 'min_intensity', 'mean_intensity',
-#                                       'orientation', 'perimeter', 'solidity']
+#                     self.cell_df = pd.concat([self.cell_df, image_cells_df], axis=0, ignore_index=True)
+                    self.cell_pd_list.append(image_cells_df)
 
-
-                    if self.AnalysisGui.NucMaskCheckBox.isChecked() == True:
+                    if self.gui_params.NucMaskCheckBox_status_check == True:
                         nuc_mask_output_folder = os.path.join(self.output_folder, 'nuclei_masks')
                         if os.path.isdir(nuc_mask_output_folder) == False:
                             os.mkdir(nuc_mask_output_folder) 
@@ -261,11 +294,11 @@ class BatchAnalysis(object):
 
             ch1_xyz, ch1_xyz_3D, ch2_xyz, ch2_xyz_3D, ch3_xyz, ch3_xyz_3D, ch4_xyz, ch4_xyz_3D, ch5_xyz, ch5_xyz_3D = self.IMAGE_FOR_SPOT_DETECTION( ImageForNucMask)
 
-            if self.AnalysisGui.NucMaxZprojectCheckBox.isChecked() == True:
+            if self.gui_params.NucMaxZprojectCheckBox_status_check == True:
 
-                if self.AnalysisGui.SpotMaxZProject.isChecked() == True:
+                if self.gui_params.SpotMaxZProject_status_check == True:
 
-                        if self.AnalysisGui.SpotCh1CheckBox.isChecked() == True:
+                        if self.gui_params.SpotCh1CheckBox_status_check == True:
                             if ch1_xyz!=[]:
                                 ch1_xyz_round = np.round(np.asarray(ch1_xyz)).astype('int')
                                 ch1_spot_nuc_labels = labeled_nuc[ch1_xyz_round[:,0], ch1_xyz_round[:,1]]
@@ -295,9 +328,9 @@ class BatchAnalysis(object):
 
                                             df_ch1 = df_ch1[df_ch1.cell_index != ind]
 
-                                self.ch1_spot_df=pd.concat([self.ch1_spot_df,df_ch1],ignore_index=True)
-
-                        if self.AnalysisGui.SpotCh2CheckBox.isChecked() == True:
+#                                 self.ch1_spot_df=pd.concat([self.ch1_spot_df,df_ch1],ignore_index=True)
+                                self.ch1_spot_df_list.append(df_ch1)
+                        if self.gui_params.SpotCh2CheckBox_status_check == True:
                             if ch2_xyz!=[]:
                                 ch2_xyz_round = np.round(np.asarray(ch2_xyz)).astype('int')
                                 ch2_spot_nuc_labels = labeled_nuc[ch2_xyz_round[:,0], ch2_xyz_round[:,1]]
@@ -326,9 +359,9 @@ class BatchAnalysis(object):
 
                                             df_ch2 = df_ch2[df_ch2.cell_index != ind]
 
-                                self.ch2_spot_df=pd.concat([self.ch2_spot_df,df_ch2],ignore_index=True)
-
-                        if self.AnalysisGui.SpotCh3CheckBox.isChecked() == True:
+#                                 self.ch2_spot_df=pd.concat([self.ch2_spot_df,df_ch2],ignore_index=True)
+                                self.ch2_spot_df_list.append(df_ch2)
+                        if self.gui_params.SpotCh3CheckBox_status_check == True:
                             if ch3_xyz!=[]:
 
                                 ch3_xyz_round = np.round(np.asarray(ch3_xyz)).astype('int')
@@ -359,9 +392,10 @@ class BatchAnalysis(object):
 
                                             df_ch3 = df_ch3[df_ch3.cell_index != ind]
 
-                                self.ch3_spot_df=pd.concat([self.ch3_spot_df, df_ch3],ignore_index=True)
+#                                 self.ch3_spot_df=pd.concat([self.ch3_spot_df, df_ch3],ignore_index=True)
+                                self.ch3_spot_df_list.append(df_ch3)
 
-                        if self.AnalysisGui.SpotCh4CheckBox.isChecked() == True:
+                        if self.gui_params.SpotCh4CheckBox_status_check == True:
                             if ch4_xyz!=[]:
 
                                 ch4_xyz_round = np.round(np.asarray(ch4_xyz)).astype('int')
@@ -392,10 +426,11 @@ class BatchAnalysis(object):
 
                                             df_ch4 = df_ch4[df_ch4.cell_index != ind]
 
-                                self.ch4_spot_df=pd.concat([self.ch4_spot_df, df_ch4],ignore_index=True)
+#                                 self.ch4_spot_df=pd.concat([self.ch4_spot_df, df_ch4],ignore_index=True)
+                                self.ch4_spot_df_list.append(df_ch4)
 
 
-                        if self.AnalysisGui.SpotCh5CheckBox.isChecked() == True:
+                        if self.gui_params.SpotCh5CheckBox_status_check == True:
                             if ch5_xyz!=[]:
 
                                 ch5_xyz_round = np.round(np.asarray(ch5_xyz)).astype('int')
@@ -428,7 +463,8 @@ class BatchAnalysis(object):
 
                                             df_ch5 = df_ch5[df_ch5.cell_index != ind]
 
-                                self.ch5_spot_df=pd.concat([self.ch5_spot_df, df_ch5],ignore_index=True) 
+#                                 self.ch5_spot_df=pd.concat([self.ch5_spot_df, df_ch5],ignore_index=True) 
+                                self.ch5_spot_df_list.append(df_ch5)
 
     def Calculate_Spot_Distances(self, row, col):
     
@@ -554,16 +590,16 @@ class BatchAnalysis(object):
         
         if self.df_checker.empty == False:
 
-            if self.AnalysisGui.NucMaxZprojectCheckBox.isChecked() == True:
+            if self.gui_params.NucMaxZprojectCheckBox_status_check == True:
 
-                maskchannel = str(self.AnalysisGui.NucleiChannel.currentIndex()+1)
+                maskchannel = str(self.gui_params.NucleiChannel_index + 1)
                 imgformask = self.df_checker.loc[(self.df_checker['channel'] == maskchannel)]
                 loadedimg_formask = self.ImageAnalyzer.max_z_project(imgformask)
                 ImageForNucMask = cv2.normalize(loadedimg_formask, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
 
             else:
                 z_imglist=[]
-                maskchannel = str(self.AnalysisGui.NucleiChannel.currentIndex()+1)
+                maskchannel = str(self.gui_params.NucleiChannel_index+1)
                 imgformask = self.df_checker.loc[(self.df_checker['channel'] == maskchannel)]
 
                 for index, row in imgformask.iterrows():
@@ -614,27 +650,27 @@ class BatchAnalysis(object):
         ch1_xyz, ch2_xyz, ch3_xyz, ch4_xyz, ch5_xyz = [],[],[],[],[]
         ch1_xyz_3D, ch2_xyz_3D, ch3_xyz_3D, ch4_xyz_3D, ch5_xyz_3D = [],[],[],[],[]
         
-        if self.AnalysisGui.SpotCh1CheckBox.isChecked() == True:
+        if self.gui_params.SpotCh1CheckBox_status_check == True:
 
             imgforspot = self.df_checker.loc[(self.df_checker['channel'] == '1')]
             ch1_xyz, ch1_xyz_3D = self.XYZ_SPOT_COORDINATES( imgforspot, ImageForNucMask, 'Ch1')
                 
-        if self.AnalysisGui.SpotCh2CheckBox.isChecked() == True:
+        if self.gui_params.SpotCh2CheckBox_status_check == True:
             
             imgforspot = self.df_checker.loc[(self.df_checker['channel'] == '2')]
             ch2_xyz, ch2_xyz_3D = self.XYZ_SPOT_COORDINATES( imgforspot, ImageForNucMask, 'Ch2')
                 
-        if self.AnalysisGui.SpotCh3CheckBox.isChecked() == True:
+        if self.gui_params.SpotCh3CheckBox_status_check == True:
             
             imgforspot = self.df_checker.loc[(self.df_checker['channel'] == '3')]
             ch3_xyz, ch3_xyz_3D = self.XYZ_SPOT_COORDINATES( imgforspot, ImageForNucMask, 'Ch3')
                     
-        if self.AnalysisGui.SpotCh4CheckBox.isChecked() == True:
+        if self.gui_params.SpotCh4CheckBox_status_check == True:
              
             imgforspot = self.df_checker.loc[(self.df_checker['channel'] == '4')]
             ch4_xyz, ch4_xyz_3D = self.XYZ_SPOT_COORDINATES( imgforspot, ImageForNucMask, 'Ch4')
         
-        if self.AnalysisGui.SpotCh5CheckBox.isChecked() == True:
+        if self.gui_params.SpotCh5CheckBox_status_check == True:
              
             imgforspot = self.df_checker.loc[(self.df_checker['channel'] == '5')]
             ch5_xyz, ch5_xyz_3D = self.XYZ_SPOT_COORDINATES( imgforspot, ImageForNucMask, 'Ch5')
